@@ -36,6 +36,9 @@ The PAC review layer indicates one of three review types:
   
 
 ### Philadelphia City Planning Commission (PCPC) Review
+The PCPC review layer indicates one of eight review types, although two (100 Year Floodplain and Steep Slopes) reside in their own data layers:
+* **City Ave Site Review:** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
+  *
 
 ### 100 Year Floodplain Review (1% Chance of annual flood)
 
