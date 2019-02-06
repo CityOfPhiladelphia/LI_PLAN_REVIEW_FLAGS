@@ -10,10 +10,23 @@ Produced from a one-time GIS analysis of PWD Parcels and their proximity to stre
 
 ### Philadelphia Art Commission (PAC) Review
 The PAC review layer indicates one of three review types:
-* **Building ID Signage Review:** This review is triggered on areas defined the City of Philadelphia's Zoning Basemap as:
+* **Building ID Signage Review:** This review is triggered on areas defined by the City of Philadelphia's Zoning Basemap as:
   * ICMX
   * I-1
   * IRMX
+* **Parkway Buffer Review:** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
+  * CTR Center City Overlay District - Parkway Buffer
+* **Signage Special Control:** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
+  * CTR Center City Overlay District - Rittenhouse Square
+  * CTR Center City Overlay District - Center City Commercial Area
+  * CTR Center City Overlay District - Convention Center Area
+  * CTR Center City Overlay District - Independence Hall Area
+  * CTR Center City Overlay District - Vine Street Area
+  * CTR Center City Overlay District - Washington Square
+  * NCA Neighborhood Commercial Area Overlay District - East Falls Neighborhood
+  * NCA Neighborhood Commercial Area Overlay District - Germantown Avenue
+  * NCA Neighborhood Commercial Area Overlay District - Main Street/Manayunk and Venice Island
+  
 
 ### Philadelphia City Planning Commission (PCPC) Review
 
