@@ -62,11 +62,13 @@ The PCPC review layer indicates one of eight review types, although two (100 Yea
   * NCO Neighborhood Conservation Overlay District - Queen Village
   * NCO Neighborhood Conservation Overlay District - Ridge Park Roxborough
 * **Wissahickon Watershed Site Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
-  * /WWO Wissahickon Watershed Overlay District
+  * WWO Wissahickon Watershed Overlay District
 
 ### 100 Year Floodplain Review (1% Chance of annual flood)
+A floodplain review is triggered on areas defined as the 100 Year Floodplain/1% Chance Annual Flood by the FEMA Floodplain map.
 
 ### Steep Slope Review
+A steep slope review is triggered on areas that fall within the bounds of the Steep Slope Overlay as defined by city ordinance [14-704(2)](http://library.amlegal.com/nxt/gateway.dll/Pennsylvania/philadelphia_pa/title14zoningandplanning/chapter14-700developmentstandards?f=templates$fn=default.htm$3.0$vid=amlegal:philadelphia_pa$anc=JD_14-704(2)) .
 
 ### Philadelphia Historic Commission (PHC) Review
 
