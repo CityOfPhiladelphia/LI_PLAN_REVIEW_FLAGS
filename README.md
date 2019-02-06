@@ -71,7 +71,9 @@ A floodplain review is triggered on areas defined as the 100 Year Floodplain/1% 
 A steep slope review is triggered on areas that fall within the bounds of the Steep Slope Overlay as defined by city ordinance [14-704(2)](http://library.amlegal.com/nxt/gateway.dll/Pennsylvania/philadelphia_pa/title14zoningandplanning/chapter14-700developmentstandards?f=templates$fn=default.htm$3.0$vid=amlegal:philadelphia_pa$anc=JD_14-704(2)) .
 
 ### Philadelphia Historic Commission (PHC) Review
+The PHC review layer indicates a historic review flag.  A historic review is triggered on areas that are defined by the Philadelphia Register of Historic Places.
 
-### PWD Plan Review
+### Philadelphia Water Department (PWD) Plan Review
+The PWD review layer indicates a one of two PWD related reviews:
 
 
