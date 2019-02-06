@@ -26,6 +26,13 @@ The PAC review layer indicates one of three review types:
   * NCA Neighborhood Commercial Area Overlay District - East Falls Neighborhood
   * NCA Neighborhood Commercial Area Overlay District - Germantown Avenue
   * NCA Neighborhood Commercial Area Overlay District - Main Street/Manayunk and Venice Island
+  * NCA Neighborhood Commercial Area Overlay District - Logan Triangle
+  * NCA Neighborhood Commercial Area Overlay District - Ridge Avenue
+  * NCA Neighborhood Commercial Area Overlay District - Lower and Central Germantown
+  * NCA Neighborhood Commercial Area Overlay District - North Delaware Avenue
+  * NCA Neighborhood Commercial Area Overlay District - Spring Garden
+  * Accessory Sign Controls - Special Controls for Cobbs Creek, Roosevelt Boulevard, and Department of Parks and Recreation Land
+  
   
 
 ### Philadelphia City Planning Commission (PCPC) Review
