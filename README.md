@@ -12,13 +12,13 @@ Produced from a one-time GIS analysis of PWD Parcels and their proximity to stre
 
 ### Philadelphia Art Commission (PAC) Review
 The PAC review layer indicates one of three review types:
-* **Building ID Signage Review:** This review is triggered on areas defined by the City of Philadelphia's Zoning Basemap as:<br>
+* **Building ID Signage Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Basemap as:<br>
   * ICMX
   * I-1
   * IRMX
-* **Parkway Buffer Review:** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:<br>
+* **Parkway Buffer Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:<br>
   * CTR Center City Overlay District - Parkway Buffer
-* **Signage Special Control:** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:<br>
+* **Signage Special Control -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:<br>
   * CTR Center City Overlay District - Rittenhouse Square
   * CTR Center City Overlay District - Center City Commercial Area
   * CTR Center City Overlay District - Convention Center Area
@@ -39,8 +39,17 @@ The PAC review layer indicates one of three review types:
 
 ### Philadelphia City Planning Commission (PCPC) Review
 The PCPC review layer indicates one of eight review types, although two (100 Year Floodplain and Steep Slopes) reside in their own data layers:
-* **City Ave Site Review:** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
-  *
+* **City Ave Site Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
+  * CAO City Avenue Overlay District - City Avenue Regional Center Area
+  * CAO City Avenue Overlay District - City Avenue Village Center Area
+* **Ridge Ave Facade Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
+  * NCA Neighborhood Commercial Area Overlay District - Ridge Avenue
+* **Master Plan Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Basemap as:
+  * RMX-1
+  * RMX-2
+  * SP-ENT
+  * SP-INS
+  * SP-STA
 
 ### 100 Year Floodplain Review (1% Chance of annual flood)
 
