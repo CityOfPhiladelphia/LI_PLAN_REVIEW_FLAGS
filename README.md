@@ -3,8 +3,10 @@ This process supports and updates the ArcGIS Feature Service: [Plan Review Flags
 
 ## Feature Layers included with Service
 #### Inspection Districts
+These are GIS polygons representing the outlines of the inspection districts for L&I Operations and Construction Services (as of Summer 2019)
 
 #### Corner Properties
+Produced from a one-time GIS analysis of PWD Parcels and their proximity to street centerlines.  There is no plan to automate this process, but parcels incorrectly labeled as 'corner properties' can be manually removed by L&I BIDV/GIS upon request.
 
 #### Philadelphia Art Commission (PAC) Review
 
