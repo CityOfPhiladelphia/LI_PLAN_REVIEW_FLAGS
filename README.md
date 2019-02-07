@@ -1,5 +1,3 @@
-(Repo description still under construction)
-
 # L&I Plan Review Flags For Eclipse
 This process supports and updates the ArcGIS Feature Service: [Plan Review Flags Eclipse](http://phl.maps.arcgis.com/home/item.html?id=7a474e2bb78b4f258751e22161e4cc75)
 
@@ -64,10 +62,10 @@ The PCPC review layer indicates one of eight review types, although two (100 Yea
 * **Wissahickon Watershed Site Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
   * WWO Wissahickon Watershed Overlay District
 
-### 100 Year Floodplain Review (1% Chance of annual flood)
+#### 100 Year Floodplain Review (1% Chance of annual flood)
 A floodplain review is triggered on areas defined as the 100 Year Floodplain/1% Chance Annual Flood by the FEMA Floodplain map.
 
-### Steep Slope Review
+#### Steep Slope Review
 A steep slope review is triggered on areas that fall within the bounds of the Steep Slope Overlay as defined by city ordinance [14-704(2)](http://library.amlegal.com/nxt/gateway.dll/Pennsylvania/philadelphia_pa/title14zoningandplanning/chapter14-700developmentstandards?f=templates$fn=default.htm$3.0$vid=amlegal:philadelphia_pa$anc=JD_14-704(2)) .
 
 ### Philadelphia Historic Commission (PHC) Review
@@ -75,5 +73,6 @@ The PHC review layer indicates a historic review flag.  A historic review is tri
 
 ### Philadelphia Water Department (PWD) Plan Review
 The PWD review layer indicates a one of two PWD related reviews:
-
+* **Green Roof Review -** This review is triggered on any property that houses a green roof as located within the Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
+* **Green Stormwater Infrastructure Buffer -** This review is triggered on any property that falls within a 500 foot buffer of any green infrastructure project as located within Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
 
