@@ -25,7 +25,7 @@ try:
     PWD_Parcels_Local = 'PWD_Parcels_'+ today.strftime("%d%b%Y")
     Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
 
-    localWorkspace = 'E:\\Plan_Review_Flags\\Workspace.gdb'
+    localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
     inMemory = 'in_memory'
 
     arcpy.env.workspace = localWorkspace
@@ -86,15 +86,18 @@ try:
         IntersectOutput = 'G:\\Scripts\\li-queries\\PR_FLAGS\\Workspace.gdb\\' + zoningFC + '_Int'
         print('Running Intersect')
         arcpy.Intersect_analysis([tempParcels] + [tempZone], IntersectOutput, 'ALL')
+
         # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
         arcpy.AddField_management(IntersectOutput, 'Thinness', 'FLOAT')
         print('Calculating Area')
+        """ #NOTE Thiness calculation was removed by request
         arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
         print('Calculating Permimeter')
         arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
         print('Calculating Thiness')
         arcpy.CalculateField_management(IntersectOutput, 'Thinness',
                                         "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
+        """
         fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
                      'Thinness', 'CODE']
         IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
