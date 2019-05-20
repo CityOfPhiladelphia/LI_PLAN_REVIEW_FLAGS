@@ -310,19 +310,19 @@ PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Y
                         GIS_LNI_PR_PCPC_100YrFloodPlain]
 PCPC_SteepSlope = ['SteepSlopeReview', pcpcR, Zoning_SteepSlopeProtectArea_r, '"Steep Slope"', None,
                    GIS_LNI_PR_PCPC_SteepSlope]
-PCPC_SkyPlaneReview = ['SkyPlaneReview', pcpcR, Zon_BaseDistricts, '[Long_Code]', "Long_Code IN('CMX-4','CMX-5')",
+PCPC_SkyPlaneReview = ['SkyPlaneReview', pcpcR, Zon_BaseDistricts, '!Long_Code!', "Long_Code IN('CMX-4','CMX-5')",
                        GIS_LNI_PR_PCPC_SkyPlaneReview]
 PAC_BuildIDSignageReview = ['BuildIDSignageReview', pacR, Zon_BaseDistricts, '!LONG_CODE!',
                             "Long_Code IN('ICMX', 'I-1', 'IRMX')", GIS_LNI_PR_PAC_BuildIDSignageReview]
 PAC_ParkwayBufferReview = ['ParkwayBufferReview', pacR, Zon_Overlays, '!Overlay_Name!',
                            "Overlay_Name IN('/CTR Center City Overlay District - Parkway Buffer')",
                            GIS_LNI_PR_PAC_ParkwayBufferReview]
-PAC_SinageSpecialControl = ['SinageSpecialControl', pacR, Zon_Overlays, '[Overlay_Name]',
+PAC_SinageSpecialControl = ['SinageSpecialControl', pacR, Zon_Overlays, '!Overlay_Name!',
                             "Overlay_Name IN('/CTR Center City Overlay District - Rittenhouse Square','/CTR Center City Overlay District - Center City Commercial Area','/CTR Center City Overlay District - Convention Center Area','/CTR Center City Overlay District - Independence Hall Area','/CTR Center City Overlay District - Vine Street Area','/CTR Center City Overlay District - Washington Square','/NCA Neighborhood Commercial Area Overlay District - East Falls Neighborhood','/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue','/NCA Neighborhood Commercial Area Overlay District - Main Street/Manayunk and Venice Island','/NCA Neighborhood Commercial Area Overlay District - Logan Triangle','/NCA Neighborhood Commercial Area Overlay District - Ridge Avenue','/NCA Neighborhood Commercial Area Overlay District - Lower and Central Germantown','/NCA Neighborhood Commercial Area Overlay District - North Delaware Avenue','/NCA Neighborhood Commercial Area Overlay District - Spring Garden','Accessory Sign Controls - Special Controls for Cobbs Creek, Roosevelt Boulevard, and Department of Parks and Recreation Land')",
                             GIS_LNI_PR_PAC_SignageSpecialControl]
 PHC_HistoricalResReview = ['HistoricalResReview', phcR, Historic_Sites_PhilReg, '"Historic Designation"', None,
                            GIS_LNI_PR_PHC_HistoricalResReview]
-PWD_GreenRoofReview = ['GreenRoofReview', pwdR, PWD_GSI_SMP_TYPES, '[SUBTYPE] &"-GREEN ROOF"', "SUBTYPE IN( 10 )",
+PWD_GreenRoofReview = ['GreenRoofReview', pwdR, PWD_GSI_SMP_TYPES, '"GREEN ROOF"', "SUBTYPE IN( 10 )",
                        GIS_LNI_PR_PWD_GreenRoofReview]
 PWD_GSI_Buffer = ['GSI_Buffer', pwdR, PWD_GSI_SMP_TYPES, '"Green Infrastructure"', None, GIS_LNI_PR_PWD_GSI_Buffer]
 
