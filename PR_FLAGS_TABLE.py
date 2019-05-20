@@ -99,7 +99,7 @@ GIS_LNI_PR_PWD_GSI_Buffer = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PWD_GS
 GIS_LNI_PR_PWD_GreenRoofReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PWD_GreenRoofReview'
 GIS_LNI_PR_PHC_HistoricalResReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PHC'
 
-PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST'
+PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST' #TODO Test
 print('SUCCESS at Step 2')
 
 
@@ -157,7 +157,7 @@ print('Converting Corner Properties to Points')
 arcpy.FeatureToPoint_management(CornerProperties, CornerPropertiesSJ_P, 'INSIDE')
 print('Creating Corner Field')
 arcpy.AddField_management(CornerPropertiesSJ_P, 'Corner', 'SHORT')
-arcpy.CalculateField_management(CornerPropertiesSJ_P, 'Corner', '1')
+arcpy.CalculateField_management(CornerPropertiesSJ_P, 'Corner', '1', 'PYTHON_9.3')
 arcpy.Delete_management(CornerProperties)
 arcpy.Delete_management(PWD_Parcels_Local)
 arcpy.Delete_management(Districts)
@@ -214,9 +214,10 @@ def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, 
     if outputFC:
         print('Copying FC to GISLNI')
         arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
-        arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation)
+        print([f.name for f in arcpy.ListFields(reviewLayer)])#TODO remove for prodcution
+        arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON_9.3')
         arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
-        arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"')
+        arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON_9.3')
         arcpy.DeleteRows_management(outputFC)
         arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
 
@@ -276,7 +277,7 @@ def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, 
     arcpy.Delete_management(IntersectOutput)
 
     return parcelDict
-
+###################################################################################################################
 
 # Plan review flag types
 pcpcR = 'PCPC'
@@ -287,22 +288,22 @@ zonB = 'BaseZoning'
 zonO = 'OverlayZoning'
 
 # Inputs to be run through parcelFlag function in order to create the plan review feature classes
-PCPC_CityAveSiteReview = ['CityAveSiteReview', pcpcR, Zon_Overlays, '[Overlay_Name]',
+PCPC_CityAveSiteReview = ['CityAveSiteReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                           "Overlay_Name IN('/CAO City Avenue Overlay District - City Avenue Regional Center Area','/CAO City Avenue Overlay District - City Avenue Village Center Area')",
                           GIS_LNI_PR_PCPC_CityAveSiteReview]
-PCPC_RidgeAveFacadeReview = ['RidgeAveFacadeReview', pcpcR, Zon_Overlays, '[Overlay_Name]',
+PCPC_RidgeAveFacadeReview = ['RidgeAveFacadeReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                              "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Ridge Avenue')",
                              GIS_LNI_PR_PCPC_RidgeAveFacadeReview]
-PCPC_MasterPlanReview = ['MasterPlanReview', pcpcR, Zon_BaseDistricts, '[Long_Code]',
+PCPC_MasterPlanReview = ['MasterPlanReview', pcpcR, Zon_BaseDistricts, '!Long_Code!',
                          "Long_Code IN('RMX-1', 'RMX-2', 'SP-ENT', 'SP-INS', 'SP-STA')",
                          GIS_LNI_PR_PCPC_MasterPlanReview]
-PCPC_CenterCityFacadeReview = ['CenterCityFacadeReview', pcpcR, Zon_Overlays, '[Overlay_Name]',
+PCPC_CenterCityFacadeReview = ['CenterCityFacadeReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                                "Overlay_Name IN('/CTR Center City Overlay District - Chestnut and Walnut Street Area', '/CTR Center City Overlay District - Broad Street Area South','/CTR Center City Overlay District - Market Street Area East')",
                                GIS_LNI_PR_PCPC_CenterCityFacadeReview]
-PCPC_NeighborConsReview = ['NeighborConsReview', pcpcR, Zon_Overlays, '[Overlay_Name]',
+PCPC_NeighborConsReview = ['NeighborConsReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                            "Overlay_Name IN('/NCO Neighborhood Conservation Overlay District - Central Roxborough','/NCO Neighborhood Conservation Overlay District - Overbrook Farms','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 1','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 2','/NCO Neighborhood Conservation Overlay District - Queen Village','/NCO Neighborhood Conservation Overlay District - Ridge Park Roxborough')",
                            GIS_LNI_PR_PCPC_NeighborConsReview]
-PCPC_WissahickonWatershedSiteReview = ['WissahickonWatershedSiteReview', pcpcR, Zon_Overlays, '[Overlay_Name]',
+PCPC_WissahickonWatershedSiteReview = ['WissahickonWatershedSiteReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                                        "Overlay_Name IN('/NCO Neighborhood Conservation Overlay District - Central Roxborough','/NCO Neighborhood Conservation Overlay District - Overbrook Farms','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 1','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 2','/NCO Neighborhood Conservation Overlay District - Queen Village','/NCO Neighborhood Conservation Overlay District - Ridge Park Roxborough')",
                                        GIS_LNI_PR_PCPC_WissWaterSiteReview]
 PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Year Flood Plain"', None,
@@ -311,9 +312,9 @@ PCPC_SteepSlope = ['SteepSlopeReview', pcpcR, Zoning_SteepSlopeProtectArea_r, '"
                    GIS_LNI_PR_PCPC_SteepSlope]
 PCPC_SkyPlaneReview = ['SkyPlaneReview', pcpcR, Zon_BaseDistricts, '[Long_Code]', "Long_Code IN('CMX-4','CMX-5')",
                        GIS_LNI_PR_PCPC_SkyPlaneReview]
-PAC_BuildIDSignageReview = ['BuildIDSignageReview', pacR, Zon_BaseDistricts, '[LONG_CODE]',
+PAC_BuildIDSignageReview = ['BuildIDSignageReview', pacR, Zon_BaseDistricts, '!LONG_CODE!',
                             "Long_Code IN('ICMX', 'I-1', 'IRMX')", GIS_LNI_PR_PAC_BuildIDSignageReview]
-PAC_ParkwayBufferReview = ['ParkwayBufferReview', pacR, Zon_Overlays, '[Overlay_Name]',
+PAC_ParkwayBufferReview = ['ParkwayBufferReview', pacR, Zon_Overlays, '!Overlay_Name!',
                            "Overlay_Name IN('/CTR Center City Overlay District - Parkway Buffer')",
                            GIS_LNI_PR_PAC_ParkwayBufferReview]
 PAC_SinageSpecialControl = ['SinageSpecialControl', pacR, Zon_Overlays, '[Overlay_Name]',
@@ -391,8 +392,10 @@ for k, v in parcelDict.iteritems():
     area = v['ParcelArea']
     district = v['District']
     flagCursor.insertRow([address, parcelID, pacBool, pac, pcpcBool, pcpc, phcBool, phc, pwdBool, pwd, corner, area, district, flood, slope])
+"""
+#Table should not be copied to DB until all fields are populated
 arcpy.TruncateTable_management(PR_FLAG_SUMMARY)
 print('Copying to GISLNI')
 arcpy.Append_management(Flags_Table_Temp, PR_FLAG_SUMMARY, 'NO_TEST')
 print('Copy Complete')
-
+"""

@@ -9,7 +9,7 @@ from datetime import timedelta
 today = datetime.datetime.today()
 oneWeekAgo = today - timedelta(days=7)
 
-PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY'
+PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST' #TODO Test
 
 Zoning_Overlays= 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_Overlays'
 
