@@ -214,7 +214,6 @@ def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, 
     if outputFC:
         print('Copying FC to GISLNI')
         arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
-        print([f.name for f in arcpy.ListFields(reviewLayer)])#TODO remove for prodcution
         arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON_9.3')
         arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
         arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON_9.3')
@@ -232,7 +231,7 @@ def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, 
     actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
     print actualFields
     arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
-    arcpy.AddField_management(IntersectOutput, 'POLY_AREA', 'FLOAT') #This is a dummy field, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
+    arcpy.AddField_management(IntersectOutput, 'POLY_AREA', 'FLOAT') #This is a dummy field to statisfy cursor, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
     """ #NOTE Thiness calculation was removed by request
     arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
     arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
@@ -362,11 +361,11 @@ for tract in districtTileCursor:
 #Step 20: Update Flags Table
 arcpy.CreateTable_management(localWorkspace, Flags_Table_Temp, PR_FLAG_SUMMARY)
 #ParcelDict Schema: {PWD_PARCELID:{Address:'', PAC:[], PCPC:[], PHC:[], PWD:[], 'SteepSlope':bool, 'Floodplain':bool, CornerProp:bool, ParcelArea:'', BaseZoning:[], OverlayZoning:[], LIDistrict:''}
-PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_FLAG_SUMMARY_TEST'
 flagFields = [f.name for f in arcpy.ListFields(Flags_Table_Temp)]
 del flagFields[flagFields.index('OBJECTID')]
 del flagFields[flagFields.index('BASE_ZONING')]
 del flagFields[flagFields.index('OVERLAY_ZONING')]
+del flagFields[flagFields.index('ZONING_RCO')]
 countin = len(parcelDict)
 count = 0
 breaks = [int(float(countin) * float(b) / 100.0) for b in range(10, 100, 10)]

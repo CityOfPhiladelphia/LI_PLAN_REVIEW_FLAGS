@@ -11,14 +11,14 @@ oneWeekAgo = today - timedelta(days=7)
 
 PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST' #TODO Test
 
-Zoning_Overlays= 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_Overlays'
+Zoning_Overlays= 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_RCO'
 
 PWD_PARCELS_DataBridge = 'Database Connections\\DataBridge.sde\\GIS_WATER.PWD_PARCELS'
 
 Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
 Council_Districts_Local = 'Districts'
 
-zoningFC = 'ZoningO_'+ today.strftime("%d%b%Y")
+zoningFC = 'ZoningRCO_'+ today.strftime("%d%b%Y")
 zoningLayer = 'ZoningLayer'
 zoningCurrent = 'ZoningCurrent'
 
@@ -65,24 +65,24 @@ del localFiles
 #Append first word from all overlay types to list.  Script will iterate through these values below to match to appropriate parcel.  This is being done to ease use of memory
 print(zoningFC)
 print([f.name for f in arcpy.ListFields(zoningFC)])
-specOverlayCursor = arcpy.da.SearchCursor(zoningFC, 'OVERLAY_NAME')
-overlayTypes = []
+specOverlayCursor = arcpy.da.SearchCursor(zoningFC, 'OID@')
+rcoIDS = []
 for row in specOverlayCursor:
-    if row[0].split(' ')[0] not in overlayTypes:
-        overlayTypes.append(row[0].split(' ')[0])
+    if row[0].split(' ')[0] not in rcoIDS:
+        rcoIDS.append(row[0].split(' ')[0])
 del specOverlayCursor
 
 #Create a layer based off of each overlay type saved from previous list
-overlayTotal = len(overlayTypes)
+overlayTotal = len(rcoIDS)
 overlayCount = 0
 arcpy.MakeFeatureLayer_management(zoningFC, zoningLayer)
 parcelDict = {}
-for overlayType in overlayTypes:
+for overlayType in rcoIDS:
     #if overlayCount == 0: #######################  <-----------
     arcpy.env.workspace = localWorkspace
     overlayCount += 1
     print('Starting '+ overlayType +' overlay ' + str(overlayCount)+ ' of ' + str(overlayTotal))
-    arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OVERLAY_NAME LIKE '" + overlayType + "%'")
+    arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OVERLAY_NAME LIKE '" + overlayType + "%'")#TODO Fix to OID
     arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
 
 
@@ -147,7 +147,7 @@ for overlayType in overlayTypes:
     del districtTileCursor
     arcpy.Delete_management(zoningCurrent)
     arcpy.SelectLayerByAttribute_management(zoningLayer, 'CLEAR_SELECTION')
-del overlayTypes
+del rcoIDS
 #arcpy.env.workspace = inMemory
 #arcpy.TableToTable_conversion(PR_FLAG_SUMMARY, inMemory, PR_FLAG_Temp) #TODO Temp for testing
 zoneCursor = arcpy.da.UpdateCursor(PR_FLAG_Temp, ['PWD_PARCEL_ID', 'OVERLAY_ZONING'])
