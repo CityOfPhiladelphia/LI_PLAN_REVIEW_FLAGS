@@ -64,17 +64,17 @@ GISLNI_Districts = 'Database Connections\\GISLNI.sde\\GIS_LNI.DISTRICTS_BROAD'
 Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
 
 # Internal data sources
-PWD_Parcels_Local = 'PWD_Parcels_'+ today.strftime("%d%b%Y")
+PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
 PWD_Spatial_Join = 'PWD_Spatial_Join'
 CornerProperties = 'Corner_Properties'
 PWD_PARCELS_SJ = 'PWD_PARCELS_Spatial_Join'
 CornerPropertiesSJ_P = 'CornerPropertiesSJ_P'
 Districts = 'Districts'
 Hist_Sites_PhilReg = 'Hist_Sites_PhilReg'
-Zon_Overlays = 'R_Zoning_Overlays_' + today.strftime("%d%b%Y")
+Zon_Overlays = 'ZoningOverlays_' + today.strftime("%d%b%Y")
 Zoning_SteepSlope = 'PCPC_SteepSlope'
 PWD_GSI_SMP_TYPES = 'PWD_GSI_SMP_TYPES'
-Zon_BaseDistricts = 'Zon_BaseDistricts_' + today.strftime("%d%b%Y")
+Zon_BaseDistricts = 'ZonBaseDistricts_' + today.strftime("%d%b%Y")
 ArtCommission_BuildingIDSinageReview = 'ArtCommission_BuildingIDSinageReview'
 FloodPlain100Yr = 'PCPC_100YrFloodPlain'
 PCPC_Intersect = 'G:\\01_Dan_Interrante_Project_Folder\\ToolScratch.gdb\\PCPC_Intersect'
@@ -109,24 +109,27 @@ print('Building parcel layer..')
 localFiles = [[Zon_BaseDistricts, Zoning_BaseDistricts], [Zon_Overlays, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge],
               [Council_Districts_Local, Council_Districts_2016]]
 
-locallySaved = [l[0] for l in localFiles]
+locallySaved = arcpy.ListFeatureClasses()
 print locallySaved
 
-# Delete local files that are more than a week old
+#Delete local files that are more than a week old
 if locallySaved is not None:
-    deleteFiles = [fc for fc in locallySaved if datetime.datetime.strptime(fc.split('_')[-1], "%d%b%Y") < oneWeekAgo]
+    deleteFiles = [fc for fc in locallySaved if (fc.endswith(str(datetime.datetime.now().year)) or fc.endswith(str(int(datetime.datetime.now().year)-1))) and datetime.datetime.strptime(fc.split('_')[-1], "%d%b%Y") < oneWeekAgo]
+    for f in deleteFiles:
+        print('Removing ' + f)
+        locallySaved.remove(f)
     print('Checking for local versions of files')
     for fc in deleteFiles:
         print('Deleting ' + fc)
         arcpy.Delete_management(fc)
-    locallySaved = []
 
 
-# If there are no local files less than a week old, copy a new one
+#If there are no local files less than a week old, copy a new one
+#TODO get this to stop unecessary copies
 print locallySaved
 for localF in localFiles:
     localName = localF[0].split('_')[0]
-    if locallySaved is None or not any(fc.startswith(localName) for fc in locallySaved):
+    if localF[0].split('_')[0] not in [l.split('_')[0] for l in locallySaved]:
         print('Copying ' + localName)
         arcpy.FeatureClassToFeatureClass_conversion(localF[1], localWorkspace, localF[0])
     else:
@@ -391,6 +394,7 @@ for k, v in parcelDict.iteritems():
     area = v['ParcelArea']
     district = v['District']
     flagCursor.insertRow([address, parcelID, pacBool, pac, pcpcBool, pcpc, phcBool, phc, pwdBool, pwd, corner, area, district, flood, slope])
+#TODO:
 """
 #Table should not be copied to DB until all fields are populated
 arcpy.TruncateTable_management(PR_FLAG_SUMMARY)

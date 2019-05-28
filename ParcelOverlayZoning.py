@@ -18,12 +18,12 @@ PWD_PARCELS_DataBridge = 'Database Connections\\DataBridge.sde\\GIS_WATER.PWD_PA
 Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
 Council_Districts_Local = 'Districts'
 
-zoningFC = 'ZoningO_'+ today.strftime("%d%b%Y")
+zoningFC = 'ZoningOverlays_'+ today.strftime("%d%b%Y")
 zoningLayer = 'ZoningLayer'
 zoningCurrent = 'ZoningCurrent'
 
 PR_FLAG_Temp = 'Flags_Table_Temp'
-PWD_Parcels_Local = 'PWD_Parcels_'+ today.strftime("%d%b%Y")
+PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
 Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -32,6 +32,7 @@ inMemory = 'in_memory'
 arcpy.env.workspace = localWorkspace
 arcpy.env.overwriteOutput = True
 locallySaved = arcpy.ListFeatureClasses()
+localFiles = [[zoningFC, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
 
 #Delete local files that are more than a week old
 
@@ -40,9 +41,10 @@ print('Checking for local versions of files')
 for fc in deleteFiles:
     print('Deleting ' + fc)
     arcpy.Delete_management(fc)
-localFiles = [[zoningFC, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
 
 #If there are no local files less than a week old, copy a new one
+#TODO get this to stop unecessary copies
+
 for localF in localFiles:
     localName = localF[0].split('_')[0]
     if not any(fc.startswith(localName) for fc in locallySaved):
@@ -97,14 +99,13 @@ for overlayType in overlayTypes:
     for tract in districtTileCursor:
         #if districtCount == 0: ####################################### <----------------------------
         #arcpy.env.workspace = inMemory  #TODO Test to see if this gone works better
-        print('Processing Tract ' + tract[0] + "\n" + str(
+        print('Processing District ' + tract[0] + "\n" + str(
             (float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
         districtCount += 1
-        print("DISTRICT = '" + tract[0] + "'")
         arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract, "DISTRICT = '" + tract[0] + "'")
         arcpy.Clip_analysis(zoningCurrent, currentTract, tempZone)
         if int(arcpy.GetCount_management(tempZone).getOutput(0)) >= 1:
-            print('Examing Overlay')
+            print('Extracting Overlay')
             arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Local, currentTract, tempParcels)
             IntersectOutput = localWorkspace + '\\' + zoningFC + '_Int'
             print('Running Intersect')

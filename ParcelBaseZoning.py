@@ -19,10 +19,10 @@ PWD_PARCELS_DataBridge = 'Database Connections\\DataBridge.sde\\GIS_WATER.PWD_PA
 Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
 Council_Districts_Local = 'Districts'
 
-zoningFC = 'ZoningB_'+ today.strftime("%d%b%Y")
+zoningFC = 'ZonBaseDistricts_'+ today.strftime("%d%b%Y")
 
 PR_FLAG_Temp = 'Flags_Table_Temp'
-PWD_Parcels_Local = 'PWD_Parcels_'+ today.strftime("%d%b%Y")
+PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
 Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -30,24 +30,29 @@ inMemory = 'in_memory'
 
 arcpy.env.workspace = localWorkspace
 arcpy.env.overwriteOutput = True
+
+localFiles = [[zoningFC, Zoning_BaseDistricts], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
 locallySaved = arcpy.ListFeatureClasses()
 print locallySaved
 
 #Delete local files that are more than a week old
 if locallySaved is not None:
     deleteFiles = [fc for fc in locallySaved if (fc.endswith(str(datetime.datetime.now().year)) or fc.endswith(str(int(datetime.datetime.now().year)-1))) and datetime.datetime.strptime(fc.split('_')[-1], "%d%b%Y") < oneWeekAgo]
+    for f in deleteFiles:
+        print('Removing ' + f)
+        locallySaved.remove(f)
     print('Checking for local versions of files')
     for fc in deleteFiles:
         print('Deleting ' + fc)
         arcpy.Delete_management(fc)
-    locallySaved = []
-localFiles = [[zoningFC, Zoning_BaseDistricts], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
+
 
 #If there are no local files less than a week old, copy a new one
+#TODO get this to stop unecessary copies
 print locallySaved
 for localF in localFiles:
     localName = localF[0].split('_')[0]
-    if locallySaved is None or not any(fc.startswith(localName) for fc in locallySaved):
+    if localF[0].split('_')[0] not in [l.split('_')[0] for l in locallySaved]:
         print('Copying ' + localName)
         arcpy.FeatureClassToFeatureClass_conversion(localF[1], localWorkspace, localF[0])
     else:
@@ -75,10 +80,10 @@ districtTileCursor = arcpy.da.SearchCursor(Council_Districts_Local, 'DISTRICT')
 parcelDict = {}
 for tract in districtTileCursor:
     #if districtCount == 0:################################################
-    arcpy.env.workspace = inMemory
+    memory = inMemory
+    arcpy.env.workspace = memory
     districtCount += 1
-    print('Processing Tract ' + tract[0] + "\n" + str((float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
-    print("DISTRICT = '" + tract[0] + "'")
+    print('Processing District ' + tract[0] + "\n" + str((float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
     #arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_Local, inMemory, currentTract, "DISTRICT = '" + tract[0] + "'")
     arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract, "DISTRICT = '" + tract[0] + "'")
     arcpy.Clip_analysis(localWorkspace + '\\' + zoningFC, currentTract, tempZone)
@@ -124,7 +129,7 @@ for tract in districtTileCursor:
 del districtTileCursor
 
 arcpy.env.workspace = localWorkspace
-arcpy.TableToTable_conversion(PR_FLAG_SUMMARY, localWorkspace, PR_FLAG_Temp)
+#arcpy.TableToTable_conversion(PR_FLAG_SUMMARY, localWorkspace, PR_FLAG_Temp) #TODO Temp
 countin = int(arcpy.GetCount_management(PR_FLAG_Temp).getOutput(0))
 count = 0
 print('Found ' + str(countin) + ' records in local flags table')
@@ -148,6 +153,7 @@ for k,v in parcelDict.iteritems():
     zoneCursor2.insertRow([k, '|'.join(v)])
 arcpy.Append_management(remainingParcels, PR_FLAG_Temp, 'NO_TEST')
 
+#TODO Uncomment/reevaluate these:
 #arcpy.TruncateTable_management(PR_FLAG_SUMMARY)
 #arcpy.Append_management(PR_FLAG_Temp, PR_FLAG_SUMMARY, 'NO_TEST')
 

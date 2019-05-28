@@ -43,6 +43,8 @@ for fc in deleteFiles:
 localFiles = [[zoningFC, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
 
 #If there are no local files less than a week old, copy a new one
+#TODO get this to stop unecessary copies
+
 for localF in localFiles:
     localName = localF[0].split('_')[0]
     if not any(fc.startswith(localName) for fc in locallySaved):
@@ -82,7 +84,7 @@ for overlayType in rcoIDS:
     arcpy.env.workspace = localWorkspace
     overlayCount += 1
     print('Starting '+ overlayType +' overlay ' + str(overlayCount)+ ' of ' + str(overlayTotal))
-    arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OVERLAY_NAME LIKE '" + overlayType + "%'")#TODO Fix to OID
+    arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OBJECTID = " + str(overlayType))
     arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
 
 
@@ -97,10 +99,9 @@ for overlayType in rcoIDS:
     for tract in districtTileCursor:
         #if districtCount == 0: ####################################### <----------------------------
         #arcpy.env.workspace = inMemory  #TODO Test to see if this gone works better
-        print('Processing Tract ' + tract[0] + "\n" + str(
+        print('Processing District ' + tract[0] + "\n" + str(
             (float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
         districtCount += 1
-        print("DISTRICT = '" + tract[0] + "'")
         arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract, "DISTRICT = '" + tract[0] + "'")
         arcpy.Clip_analysis(zoningCurrent, currentTract, tempZone)
         if int(arcpy.GetCount_management(tempZone).getOutput(0)) >= 1:
@@ -122,7 +123,7 @@ for overlayType in rcoIDS:
             fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
                          'Thinness', 'CODE']
             '''
-            fieldList = ['PARCELID', 'GROSS_AREA', 'OVERLAY_NAME']
+            fieldList = ['PARCELID', 'GROSS_AREA', ''] #TODO Find new field name
             IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
             countin = int(arcpy.GetCount_management(IntersectOutput).getOutput(0))
             count = 0
