@@ -109,7 +109,6 @@ try:
                   [Council_Districts_Local, Council_Districts_2016]]
 
     locallySaved = arcpy.ListFeatureClasses()
-    print locallySaved
 
     #Delete local files that are more than a week old
     if locallySaved is not None:
@@ -124,8 +123,6 @@ try:
 
 
     #If there are no local files less than a week old, copy a new one
-    #TODO get this to stop unecessary copies
-    print locallySaved
     for localF in localFiles:
         localName = localF[0].split('_')[0]
         if localF[0].split('_')[0] not in [l.split('_')[0] for l in locallySaved]:
@@ -202,7 +199,6 @@ try:
         IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
         reviewLayer = reviewType + '_' + reviewName
         reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
-        print reviewField
 
         if '_Buffer' in reviewName:
             print('Buffering')
@@ -231,7 +227,6 @@ try:
 
         #To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
         actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
-        print actualFields
         arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
         arcpy.AddField_management(IntersectOutput, 'POLY_AREA', 'FLOAT') #This is a dummy field to statisfy cursor, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
         """ #NOTE Thiness calculation was removed by request

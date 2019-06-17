@@ -52,7 +52,6 @@ try:
 
     localFiles = [[zoningFC, Zoning_BaseDistricts], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
     locallySaved = arcpy.ListFeatureClasses()
-    print locallySaved
 
     #Delete local files that are more than a week old
     if locallySaved is not None:
@@ -67,7 +66,6 @@ try:
 
 
     #If there are no local files less than a week old, copy a new one
-    print locallySaved
     for localF in localFiles:
         localName = localF[0].split('_')[0]
         if localF[0].split('_')[0] not in [l.split('_')[0] for l in locallySaved]:

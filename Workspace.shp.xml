@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<metadata xml:lang="en"><Esri><CreaDate>20180308</CreaDate><CreaTime>18295800</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files (x86)\arcgis\desktop10.4\ArcToolbox\Toolboxes\Analysis Tools.tbx\Intersect" Date="20180308" Time="182958">Intersect "in_memory\PWD_Spatial_Join #;in_memory\R_Zoning_Overlays #" G:\Scripts\li-queries\PR_FLAGS\Workspace.shp ALL # INPUT</Process></lineage></DataProperties></Esri></metadata>
