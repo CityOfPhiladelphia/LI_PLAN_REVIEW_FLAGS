@@ -2,6 +2,7 @@ import arcpy
 import logging
 import sys
 import traceback
+from sde_connections import DataBridge_GIS_LNI, GISLNI
 
 # Step 1: Configure log file
 try:
@@ -24,15 +25,15 @@ except:
 
 try:
     log.info('Truncating GISLNI')
-    arcpy.TruncateTable_management('Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY')
+    arcpy.TruncateTable_management(GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY')
     log.info('Appending to GISLNI')
-    arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
+    arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
     log.info('GISLNI Table Updated')
 
     log.info('Truncating DataBridge')
-    arcpy.TruncateTable_management('Database Connections\\DataBridge_GIS_LNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY')
+    arcpy.TruncateTable_management(DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY')
     log.info('Appending to DataBridge')
-    arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', 'Database Connections\\DataBridge_GIS_LNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
+    arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
     log.info('DataBridge Table Updated')
 except:
     msgs = arcpy.GetMessages(2)

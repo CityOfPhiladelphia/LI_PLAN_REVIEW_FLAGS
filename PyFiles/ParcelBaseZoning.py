@@ -4,6 +4,7 @@ import traceback
 import datetime
 import logging
 from datetime import timedelta
+from sde_connections import DataBridge
 
 
 # Step 1: Configure log file
@@ -30,12 +31,12 @@ try:
     today = datetime.datetime.today()
     oneWeekAgo = today - timedelta(days=7)
 
-    Zoning_BaseDistricts = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_BaseDistricts'
-    Zoning_Overlays= 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_Overlays'
+    Zoning_BaseDistricts = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_BaseDistricts'
+    Zoning_Overlays= DataBridge.sde_path+'\\GIS_PLANNING.Zoning_Overlays'
 
-    PWD_PARCELS_DataBridge = 'Database Connections\\DataBridge.sde\\GIS_WATER.PWD_PARCELS'
+    PWD_PARCELS_DataBridge = DataBridge.sde_path+'\\GIS_WATER.PWD_PARCELS'
 
-    Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
+    Council_Districts_2016 = DataBridge.sde_path+'\\GIS_PLANNING.Council_Districts_2016'
     Council_Districts_Local = 'Districts'
 
     zoningFC = 'ZonBaseDistricts_'+ today.strftime("%d%b%Y")
@@ -165,7 +166,7 @@ try:
     remainingParcels = 'Parcels_Without_Flags'
     arcpy.CreateTable_management(localWorkspace, remainingParcels, PR_FLAG_Temp)
     zoneCursor2 = arcpy.da.InsertCursor(remainingParcels, ['PWD_PARCEL_ID', 'BASE_ZONING'])
-    for k,v in parcelDict.iteritems():
+    for k,v in parcelDict.items():
         zoneCursor2.insertRow([k, '|'.join(v)])
     arcpy.Append_management(remainingParcels, PR_FLAG_Temp, 'NO_TEST')
     log.info('PR Flags Part 2 Complete')

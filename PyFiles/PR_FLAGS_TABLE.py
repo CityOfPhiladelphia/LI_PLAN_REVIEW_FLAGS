@@ -1,9 +1,3 @@
-"""
-Note:
-This script was originally designed to create a table listing every pwd parcel in the city and related attributes.
-The need for this list has since been scraped but there is still a need for the PR GIS layers created in this script.
-Much of the process has been commented out but left in place in case the need for this ever returns
-"""
 
 import sys
 import traceback
@@ -11,6 +5,7 @@ import logging
 import arcpy
 import datetime
 from datetime import timedelta
+from sde_connections import DataBridge, GISLNI
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
 inMemory = 'in_memory'
@@ -51,16 +46,16 @@ try:
     oneWeekAgo = today - timedelta(days=7)
 
     # External data sources
-    PWD_PARCELS_DataBridge = 'Database Connections\\DataBridge.sde\\GIS_WATER.PWD_PARCELS'
-    Zoning_BaseDistricts = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_BaseDistricts'
-    FEMA_100_flood_Plain = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.FEMA_100_flood_Plain'
-    Historic_Sites_PhilReg = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Historic_Sites_PhilReg'
-    Zoning_Overlays = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_Overlays'
-    Zoning_SteepSlopeProtectArea_r = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_SteepSlopeProtectArea_r'
-    GSI_SMP_TYPES = 'Database Connections\\DataBridge.sde\\GIS_WATER.GSI_SMP_TYPES'
-    GISLNI_Corner_Properties = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_CORNER_PROPERTIES'
-    GISLNI_Districts = 'Database Connections\\GISLNI.sde\\GIS_LNI.DISTRICTS_BROAD'
-    Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
+    PWD_PARCELS_DataBridge = DataBridge.sde_path+'\\GIS_WATER.PWD_PARCELS'
+    Zoning_BaseDistricts = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_BaseDistricts'
+    FEMA_100_flood_Plain = DataBridge.sde_path+'\\GIS_PLANNING.FEMA_100_flood_Plain'
+    Historic_Sites_PhilReg = DataBridge.sde_path+'\\GIS_PLANNING.Historic_Sites_PhilReg'
+    Zoning_Overlays = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_Overlays'
+    Zoning_SteepSlopeProtectArea_r = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_SteepSlopeProtectArea_r'
+    GSI_SMP_TYPES = DataBridge.sde_path+'\\GIS_WATER.GSI_SMP_TYPES'
+    GISLNI_Corner_Properties = GISLNI.sde_path+'\\GIS_LNI.PR_CORNER_PROPERTIES'
+    GISLNI_Districts = GISLNI.sde_path+'\\GIS_LNI.DISTRICTS_BROAD'
+    Council_Districts_2016 = DataBridge.sde_path+'\\GIS_PLANNING.Council_Districts_2016'
 
     # Internal data sources
     PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
@@ -82,23 +77,23 @@ try:
     Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
 
     # LIGISDB Output FeatureClasses
-    GIS_LNI_PR_PCPC_CityAveSiteReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_CityAveSiteReview'
-    GIS_LNI_PR_PCPC_RidgeAveFacadeReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_RidgeAveFacadeReview'
-    GIS_LNI_PR_PCPC_MasterPlanReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_MasterPlanReview'
-    GIS_LNI_PR_PCPC_CenterCityFacadeReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_CenterCityFacadeReview'
-    GIS_LNI_PR_PCPC_NeighborConsReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_NeighborConsReview'
-    GIS_LNI_PR_PCPC_WissWaterSiteReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_WissWaterSiteReview'
-    GIS_LNI_PR_PCPC_100YrFloodPlain = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_100YrFloodPlain'
-    GIS_LNI_PR_PCPC_SteepSlope = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_SteepSlope'
-    GIS_LNI_PR_PCPC_SkyPlaneReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PCPC_SkyPlaneReview'
-    GIS_LNI_PR_PAC_BuildIDSignageReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PAC_BuildIDSignageReview'
-    GIS_LNI_PR_PAC_ParkwayBufferReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PAC_ParkwayBufferReview'
-    GIS_LNI_PR_PAC_SignageSpecialControl = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PAC_SinageSpecialControl'
-    GIS_LNI_PR_PWD_GSI_Buffer = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PWD_GSI_Buffer'
-    GIS_LNI_PR_PWD_GreenRoofReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PWD_GreenRoofReview'
-    GIS_LNI_PR_PHC_HistoricalResReview = 'Database Connections\\GISLNI.sde\\GIS_LNI.PR_PHC'
+    GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_CityAveSiteReview'
+    GIS_LNI_PR_PCPC_RidgeAveFacadeReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_RidgeAveFacadeReview'
+    GIS_LNI_PR_PCPC_MasterPlanReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_MasterPlanReview'
+    GIS_LNI_PR_PCPC_CenterCityFacadeReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_CenterCityFacadeReview'
+    GIS_LNI_PR_PCPC_NeighborConsReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_NeighborConsReview'
+    GIS_LNI_PR_PCPC_WissWaterSiteReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_WissWaterSiteReview'
+    GIS_LNI_PR_PCPC_100YrFloodPlain = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_100YrFloodPlain'
+    GIS_LNI_PR_PCPC_SteepSlope = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_SteepSlope'
+    GIS_LNI_PR_PCPC_SkyPlaneReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_SkyPlaneReview'
+    GIS_LNI_PR_PAC_BuildIDSignageReview = GISLNI.sde_path+'\\GIS_LNI.PR_PAC_BuildIDSignageReview'
+    GIS_LNI_PR_PAC_ParkwayBufferReview = GISLNI.sde_path+'\\GIS_LNI.PR_PAC_ParkwayBufferReview'
+    GIS_LNI_PR_PAC_SignageSpecialControl = GISLNI.sde_path+'\\GIS_LNI.PR_PAC_SinageSpecialControl'
+    GIS_LNI_PR_PWD_GSI_Buffer = GISLNI.sde_path+'\\GIS_LNI.PR_PWD_GSI_Buffer'
+    GIS_LNI_PR_PWD_GreenRoofReview = GISLNI.sde_path+'\\GIS_LNI.PR_PWD_GreenRoofReview'
+    GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path+'\\GIS_LNI.PR_PHC'
 
-    PR_FLAG_SUMMARY = 'Database Connections\\GISLNI.sde\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST' #TODO Test
+    PR_FLAG_SUMMARY = GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST' #TODO Test
     print('SUCCESS at Step 2')
 
 
@@ -195,84 +190,92 @@ try:
     # the overlays
     def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, outputFC, localWorkspace, parcels,
                    parcelDict):
-        sourceFC = localWorkspace + '\\' + sourceFC if 'Database Connection' not in sourceFC else sourceFC
-        IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
-        reviewLayer = reviewType + '_' + reviewName
-        reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
+        try:
+            sourceFC = localWorkspace + '\\' + sourceFC if '.sde' not in sourceFC else sourceFC
+            IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
+            reviewLayer = reviewType + '_' + reviewName
+            reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
 
-        if '_Buffer' in reviewName:
-            print('Buffering')
-            arcpy.Buffer_analysis(sourceFC, reviewLayer, '500 Feet')
-        else:
-            print('Creating Local FC for ' + reviewName)
-            arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,
-                                                        whereClause)
+            if '_Buffer' in reviewName:
+                print('Buffering')
+                arcpy.Buffer_analysis(sourceFC, reviewLayer, '500 Feet')
+            else:
+                print('Creating Local FC for ' + reviewName)
+                arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,
+                                                            whereClause)
 
-        # All FCs except for Zoning are copied to LIGISDB
-        if outputFC:
-            print('Copying FC to GISLNI')
-            arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
-            arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON_9.3')
-            arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
-            arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON_9.3')
-            arcpy.DeleteRows_management(outputFC)
-            arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
+            # All FCs except for Zoning are copied to LIGISDB
+            if outputFC:
+                print('Copying FC to GISLNI')
+                arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
+                arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON_9.3')
+                arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
+                arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON_9.3')
+                arcpy.DeleteRows_management(outputFC)
+                arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
 
-        print('Performing Intersect')
-        #Create polygons where review polygons overlap with parcels
-        arcpy.Intersect_analysis([parcels]+[reviewLayer], IntersectOutput, 'ALL')
-        print('Intersect Complete')
+            print('Performing Intersect')
+            #Create polygons where review polygons overlap with parcels
+            arcpy.Intersect_analysis([parcels]+[reviewLayer], IntersectOutput, 'ALL')
+            print('Intersect Complete')
 
-        arcpy.Delete_management(reviewLayer)
+            arcpy.Delete_management(reviewLayer)
 
-        #To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
-        actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
-        arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
-        arcpy.AddField_management(IntersectOutput, 'POLY_AREA', 'FLOAT') #This is a dummy field to statisfy cursor, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
-        """ #NOTE Thiness calculation was removed by request
-        arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
-        arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
-        arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
-                                        "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
-    
-        """
-        fieldList = ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA', 'POLY_AREA',
-                     'ThinessRatio', reviewField]
-        IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
-        countin = int(arcpy.GetCount_management(IntersectOutput).getOutput(0))
-        count = 0
-        print('Found ' + str(countin) + ' records in input table')
-        breaks = [int(float(countin) * float(b) / 100.0) for b in range(10, 100, 10)]
-        for row in IntersectCursor:
-            count += 1
-            if count in breaks:
-                print('Parsing Intersect FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-            #Only polygons with a thiness ratio of over 0.3 and a parcel coverage of more than 3% are included in analysis
-            if row[1] != '' and row[1] is not None and row[7] != '': #and row[6] > 0.3 and (row[5] / float(row[4])) > 0.03 :
-                #If parcel has not made it into dictionary, parcel gets a new entry added
-                if row[0] not in parcelDict and reviewType != zonB and reviewType != zonO:
-                    tempDict = {'Address': row[1], 'PAC': [], 'PCPC': [], 'TempPCPC': [], 'PHC': [], 'PWD': [], 'SteepSlope': 0, 'Floodplain': 0, 'CornerProp': row[3], 'ParcelArea': row[4], 'BaseZoning': [], 'OverlayZoning': [], 'District': row[2]}
-                    tempDict[reviewType] = [row[7]]
-                    if fieldCalculation == '"100 Year Flood Plain"':
-                        tempDict['Floodplain'] = 1
-                    if fieldCalculation == '"Steep Slope"':
-                        tempDict['SteepSlope'] = 1
-                    parcelDict[row[0]] = tempDict
-                #If parcel already exists, its current dictionary entry is appended with new review information
-                elif row[0] in parcelDict:
-                    tempDict = parcelDict.get(row[0])
-                    oldList = tempDict.get(reviewType)
-                    #The set function removes all duplicates from list
-                    tempDict[reviewType] = list(set([row[7]] + oldList))
-                    if fieldCalculation == '"100 Year Flood Plain"':
-                        tempDict['Floodplain'] = 1
-                    if fieldCalculation == '"Steep Slope"':
-                        tempDict['SteepSlope'] = 1
-                    parcelDict[row[0]] = tempDict
+            #To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
+            actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
+            arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
+            arcpy.AddField_management(IntersectOutput, 'POLY_AREA', 'FLOAT') #This is a dummy field to statisfy cursor, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
+            """ #NOTE Thiness calculation was removed by request
+            arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
+            arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
+            arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
+                                            "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
+        
+            """
+            fieldList = ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA', 'POLY_AREA',
+                         'ThinessRatio', reviewField]
+            IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
+            countin = int(arcpy.GetCount_management(IntersectOutput).getOutput(0))
+            count = 0
+            print('Found ' + str(countin) + ' records in input table')
+            breaks = [int(float(countin) * float(b) / 100.0) for b in range(10, 100, 10)]
+            for row in IntersectCursor:
+                count += 1
+                if count in breaks:
+                    print('Parsing Intersect FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
+                #Only polygons with a thiness ratio of over 0.3 and a parcel coverage of more than 3% are included in analysis
+                if row[1] != '' and row[1] is not None and row[7] != '': #and row[6] > 0.3 and (row[5] / float(row[4])) > 0.03 :
+                    #If parcel has not made it into dictionary, parcel gets a new entry added
+                    if row[0] not in parcelDict and reviewType != zonB and reviewType != zonO:
+                        tempDict = {'Address': row[1], 'PAC': [], 'PCPC': [], 'TempPCPC': [], 'PHC': [], 'PWD': [], 'SteepSlope': 0, 'Floodplain': 0, 'CornerProp': row[3], 'ParcelArea': row[4], 'BaseZoning': [], 'OverlayZoning': [], 'District': row[2]}
+                        tempDict[reviewType] = [row[7]]
+                        if fieldCalculation == '"100 Year Flood Plain"':
+                            tempDict['Floodplain'] = 1
+                        if fieldCalculation == '"Steep Slope"':
+                            tempDict['SteepSlope'] = 1
+                        parcelDict[row[0]] = tempDict
+                    #If parcel already exists, its current dictionary entry is appended with new review information
+                    elif row[0] in parcelDict:
+                        tempDict = parcelDict.get(row[0])
+                        oldList = tempDict.get(reviewType)
+                        #The set function removes all duplicates from list
+                        tempDict[reviewType] = list(set([row[7]] + oldList))
+                        if fieldCalculation == '"100 Year Flood Plain"':
+                            tempDict['Floodplain'] = 1
+                        if fieldCalculation == '"Steep Slope"':
+                            tempDict['SteepSlope'] = 1
+                        parcelDict[row[0]] = tempDict
 
-        arcpy.Delete_management(IntersectOutput)
+            arcpy.Delete_management(IntersectOutput)
 
-        return parcelDict
+            return parcelDict
+        except:
+            tb = sys.exc_info()[2]
+            tbinfo = traceback.format_tb(tb)[0]
+            pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+            arcpy.AddError(pymsg)
+            log.error(pymsg)
+            sys.exit(1)
     ###################################################################################################################
 
     # Plan review flag types
@@ -368,7 +371,7 @@ try:
     breaks = [int(float(countin) * float(b) / 100.0) for b in range(10, 100, 10)]
     print('Preparing to Append ' + str(countin) + ' rows')
     flagCursor = arcpy.da.InsertCursor(Flags_Table_Temp, flagFields)
-    for k, v in parcelDict.iteritems():
+    for k, v in parcelDict.items():
         count += 1
         if count in breaks:
             arcpy.AddMessage('Creation of Table Rows ' + str(int(round(count * 100.0 / countin))) + '% complete...')

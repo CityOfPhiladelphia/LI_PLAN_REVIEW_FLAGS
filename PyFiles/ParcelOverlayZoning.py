@@ -4,6 +4,7 @@ import traceback
 import logging
 import datetime
 from datetime import timedelta
+from sde_connections import DataBridge
 
 # Step 1: Configure log file
 try:
@@ -29,11 +30,11 @@ try:
     today = datetime.datetime.today()
     oneWeekAgo = today - timedelta(days=7)
 
-    Zoning_Overlays= 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Zoning_Overlays'
+    Zoning_Overlays= DataBridge.sde_path+'\\GIS_PLANNING.Zoning_Overlays'
 
-    PWD_PARCELS_DataBridge = 'Database Connections\\DataBridge.sde\\GIS_WATER.PWD_PARCELS'
+    PWD_PARCELS_DataBridge = DataBridge.sde_path+'\\GIS_WATER.PWD_PARCELS'
 
-    Council_Districts_2016 = 'Database Connections\\DataBridge.sde\\GIS_PLANNING.Council_Districts_2016'
+    Council_Districts_2016 = DataBridge.sde_path+'\\GIS_PLANNING.Council_Districts_2016'
     Council_Districts_Local = 'Districts'
 
     zoningFC = 'ZoningOverlays_'+ today.strftime("%d%b%Y")
