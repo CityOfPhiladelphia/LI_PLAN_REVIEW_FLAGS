@@ -5,6 +5,8 @@ import datetime
 import logging
 from datetime import timedelta
 from sde_connections import DataBridge
+from li_dbs_Lazy import DataBridge as DataBridge_Oracle
+
 
 
 # Step 1: Configure log file
@@ -46,6 +48,7 @@ try:
     Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
 
     localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
+
     inMemory = 'in_memory'
 
     arcpy.env.workspace = localWorkspace
@@ -97,7 +100,7 @@ try:
     parcelDict = {}
     for tract in districtTileCursor:
         memory = inMemory
-        arcpy.env.workspace = memory
+        #arcpy.env.workspace = memory
         districtCount += 1
         print('Processing District ' + tract[0] + "\n" + str((float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
         arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract, "DISTRICT = '" + tract[0] + "'")
@@ -120,9 +123,9 @@ try:
         """
 
 
-        fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
-                     'Thinness', 'CODE']
-        IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
+        inFL = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
+                     'Thinness', 'CODE', 'ADDRESS']
+        IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, inFL)
         countin = int(arcpy.GetCount_management(IntersectOutput).getOutput(0))
         count = 0
         print('Found ' + str(countin) + ' records in intersect table')
@@ -133,11 +136,13 @@ try:
                 if count in breaks:
                     print('Parsing Zoning FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
                 if (row[2] / float(row[1])) > 0.01:  #To implment 3% coverage and thinness minimum: and row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
-                    if row[0] in parcelDict:
-                        tempList = parcelDict.get(row[0])
-                        parcelDict[row[0]] = list(set([row[4]] + tempList))
+                    if row[inFL.index('PARCELID')] in parcelDict:
+                        tempList = parcelDict.get(row[inFL.index('PARCELID')])
+                        tempCode = tempList[0]
+                        newTempList = [list(set([row[inFL.index('CODE')]] + tempCode)),row[inFL.index('ADDRESS')] ]
+                        parcelDict[row[inFL.index('PARCELID')]] = newTempList
                     else:
-                        parcelDict[row[0]] = [row[4]]
+                        parcelDict[row[inFL.index('PARCELID')]] = [[row[inFL.index('CODE')]], row[inFL.index('ADDRESS')]]
             except:
                 continue
         arcpy.Delete_management(IntersectOutput)
@@ -146,7 +151,7 @@ try:
         arcpy.Delete_management(tempParcels)
     del districtTileCursor
 
-    arcpy.env.workspace = localWorkspace
+    # Add base zoning for existing parking
     countin = int(arcpy.GetCount_management(PR_FLAG_Temp).getOutput(0))
     count = 0
     print('Found ' + str(countin) + ' records in local flags table')
@@ -157,22 +162,49 @@ try:
         if count in breaks:
             print('Adding Zoning to Exisiting FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
         if parcel[0] in parcelDict:
-            parcel[1] = '|'.join(parcelDict.get(parcel[0]))
+            parcel[1] = '|'.join(parcelDict[parcel[0]][0])
             del parcelDict[parcel[0]]
             zoneCursor1.updateRow(parcel)
     del zoneCursor1
 
-
+    # Add remaining parcels to table
+    print('Copying new parcels to table')
+    countin = int(len(parcelDict))
+    count = 0
+    breaks = [int(float(countin) * float(b) / 100.0) for b in range(10, 100, 10)]
     remainingParcels = 'Parcels_Without_Flags'
+    if arcpy.Exists(remainingParcels):
+        arcpy.Delete_management(remainingParcels)
     arcpy.CreateTable_management(localWorkspace, remainingParcels, PR_FLAG_Temp)
-    zoneCursor2 = arcpy.da.InsertCursor(remainingParcels, ['PWD_PARCEL_ID', 'BASE_ZONING'])
+    flagFields = ['PAC_FLAG', 'PCPC_FLAG', 'PHC_FLAG', 'PWD_FLAG', 'CORNER_PROPERTY', 'FLOODPLAIN', 'STEEP_SLOPE']
+    zoneCursor2 = arcpy.da.InsertCursor(remainingParcels, ['PWD_PARCEL_ID', 'BASE_ZONING', 'ADDRESS'] + flagFields)
     for k,v in parcelDict.items():
-        zoneCursor2.insertRow([k, '|'.join(v)])
+        count += 1
+        if count in breaks:
+            print('Adding Addresses to table ' + str(int(round(count * 100.0 / countin))) + '% complete...')
+        zoneCursor2.insertRow([k, '|'.join(v[0]), v[-1]] + [0] * len(flagFields))
     arcpy.Append_management(remainingParcels, PR_FLAG_Temp, 'NO_TEST')
+    arcpy.Delete_management(remainingParcels)
     log.info('PR Flags Part 2 Complete')
+
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+    print(pymsg)
     log.error(pymsg)
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from phila_mail import server
+    sender = 'LIGISTeam@phila.gov'
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    commaspace = ', '
+    msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
+    msg['To'] = commaspace.join(recipientslist)
+    msg['From'] = sender
+    msg['X-Priority'] = '2'
+    msg['Subject'] = 'Plan Review Flags Table Update Failure'
+    server.server.sendmail(sender, recipientslist, msg.as_string())
+    server.server.quit()
     sys.exit(1)
