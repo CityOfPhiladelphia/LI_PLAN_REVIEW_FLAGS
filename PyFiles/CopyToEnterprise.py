@@ -1,7 +1,8 @@
-import arcpy
 import logging
 import sys
 import traceback
+
+import arcpy
 from sde_connections import DataBridge_GIS_LNI, GISLNI
 
 # Step 1: Configure log file
@@ -24,6 +25,7 @@ except:
     sys.exit(1)
 
 try:
+
     log.info('Truncating GISLNI')
     arcpy.TruncateTable_management(GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY')
     log.info('Appending to GISLNI')
@@ -35,10 +37,25 @@ try:
     log.info('Appending to DataBridge')
     arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
     log.info('DataBridge Table Updated')
+
 except:
     msgs = arcpy.GetMessages(2)
     print(msgs)
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from phila_mail import server
+    sender = 'LIGISTeam@phila.gov'
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    commaspace = ', '
+    msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
+    msg['To'] = commaspace.join(recipientslist)
+    msg['From'] = sender
+    msg['X-Priority'] = '2'
+    msg['Subject'] = 'Plan Review Flags Table Update Failure'
+    server.server.sendmail(sender, recipientslist, msg.as_string())
+    server.server.quit()
     log.error(pymsg)

@@ -1,10 +1,11 @@
 
+import datetime
+import logging
 import sys
 import traceback
-import logging
-import arcpy
-import datetime
 from datetime import timedelta
+
+import arcpy
 from sde_connections import DataBridge, GISLNI
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -391,11 +392,26 @@ try:
         area = v['ParcelArea']
         district = v['District']
         flagCursor.insertRow([address, parcelID, pacBool, pac, pcpcBool, pcpc, phcBool, phc, pwdBool, pwd, corner, area, district, flood, slope])
-        log.info('PR Flags Part 1 complete')
+
+    log.info('PR Flags Part 1 complete')
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
     arcpy.AddError(pymsg)
     log.error(pymsg)
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from phila_mail import server
+    sender = 'LIGISTeam@phila.gov'
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    commaspace = ', '
+    msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
+    msg['To'] = commaspace.join(recipientslist)
+    msg['From'] = sender
+    msg['X-Priority'] = '2'
+    msg['Subject'] = 'Plan Review Flags Table Update Failure'
+    server.server.sendmail(sender, recipientslist, msg.as_string())
+    server.server.quit()
     sys.exit(1)

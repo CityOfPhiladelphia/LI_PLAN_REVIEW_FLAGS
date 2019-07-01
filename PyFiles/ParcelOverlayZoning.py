@@ -1,9 +1,10 @@
-import arcpy
+import datetime
+import logging
 import sys
 import traceback
-import logging
-import datetime
 from datetime import timedelta
+
+import arcpy
 from sde_connections import DataBridge
 
 # Step 1: Configure log file
@@ -26,7 +27,7 @@ except:
     sys.exit(1)
 
 try:
-    log.info('PR Flags Part 4 Begun')
+    log.info('PR Flags Part 3 Begun')
     today = datetime.datetime.today()
     oneWeekAgo = today - timedelta(days=7)
 
@@ -96,7 +97,7 @@ try:
     arcpy.MakeFeatureLayer_management(zoningFC, zoningLayer)
     parcelDict = {}
     for overlayType in overlayTypes:
-        arcpy.env.workspace = localWorkspace
+        #arcpy.env.workspace = localWorkspace
         overlayCount += 1
         print('Starting '+ overlayType +' overlay ' + str(overlayCount)+ ' of ' + str(overlayTotal))
         arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OVERLAY_NAME LIKE '" + overlayType + "%'")
@@ -169,7 +170,7 @@ try:
             parcel[1] = '|'.join(parcelDict.get(parcel[0]))
             zoneCursor.updateRow(parcel)
     del zoneCursor
-    log.info('PR Flags Part 4 Begun')
+    log.info('PR Flags Part 3 Complete')
 
 
 except:
@@ -177,4 +178,19 @@ except:
     tbinfo = traceback.format_tb(tb)[0]
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
     log.info(pymsg)
+    print(pymsg)
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from phila_mail import server
+    sender = 'LIGISTeam@phila.gov'
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    commaspace = ', '
+    msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
+    msg['To'] = commaspace.join(recipientslist)
+    msg['From'] = sender
+    msg['X-Priority'] = '2'
+    msg['Subject'] = 'Plan Review Flags Table Update Failure'
+    server.server.sendmail(sender, recipientslist, msg.as_string())
+    server.server.quit()
     sys.exit(1)

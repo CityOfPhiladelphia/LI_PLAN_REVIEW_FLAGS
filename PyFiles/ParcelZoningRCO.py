@@ -1,9 +1,10 @@
-import arcpy
+import datetime
+import logging
 import sys
 import traceback
-import logging
-import datetime
 from datetime import timedelta
+
+import arcpy
 from sde_connections import DataBridge
 
 # Step 1: Configure log file
@@ -157,8 +158,6 @@ try:
         arcpy.Delete_management(zoningCurrent)
         arcpy.SelectLayerByAttribute_management(zoningLayer, 'CLEAR_SELECTION')
     del rcoIDS
-    #arcpy.env.workspace = inMemory
-    #arcpy.TableToTable_conversion(PR_FLAG_SUMMARY, inMemory, PR_FLAG_Temp) #TODO Temp for testing
     zoneCursor = arcpy.da.UpdateCursor(PR_FLAG_Temp, ['PWD_PARCEL_ID', 'ZONING_RCO'])
     print('Starting Cursor')
     for parcel in zoneCursor:
@@ -173,4 +172,19 @@ except:
     tbinfo = traceback.format_tb(tb)[0]
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
     log.error(pymsg)
+    print(pymsg)
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from phila_mail import server
+    sender = 'LIGISTeam@phila.gov'
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    commaspace = ', '
+    msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
+    msg['To'] = commaspace.join(recipientslist)
+    msg['From'] = sender
+    msg['X-Priority'] = '2'
+    msg['Subject'] = 'Plan Review Flags Table Update Failure'
+    server.server.sendmail(sender, recipientslist, msg.as_string())
+    server.server.quit()
     sys.exit(1)
