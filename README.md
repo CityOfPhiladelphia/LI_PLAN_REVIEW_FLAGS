@@ -1,9 +1,10 @@
 # L&I Plan Review Flags For Eclipse
-This process supports and updates the ArcGIS Feature Service: [Plan Review Flags Eclipse](http://phl.maps.arcgis.com/home/item.html?id=7a474e2bb78b4f258751e22161e4cc75)
+This process was orinally planned to support the ArcGIS Feature Service: [Plan Review Flags Eclipse](http://phl.maps.arcgis.com/home/item.html?id=7a474e2bb78b4f258751e22161e4cc75).  This has been since modified to support the GIS_LNI.LI_PR_FLAG_SUMMARY table on DataBridge gis_sde_viewer.  This table represents applicable zoning review data based on that parcel's [PWD_PARCEL's](http://metadata.phila.gov/#home/datasetdetails/5543864620583086178c4e7a/representationdetails/55438a829b989a05172d0cfa/) geometry in GIS.  
 
-## Feature Layers included with Service
+## Property Data Displayed with table
 ### Inspection Districts
-These are GIS polygons representing the outlines of the inspection districts for L&I Operations and Construction Services (as of Summer 2019)
+<pre>LI_INSPECTION_DISTRICT</pre>
+The L&I inspection district responsible to the property
 
 ### Corner Properties
 Produced from a one-time GIS analysis of PWD Parcels and their proximity to street centerlines.  There is no plan to automate this process, but parcels incorrectly labeled as 'corner properties' can be manually removed by L&I BIDV/GIS upon request.
