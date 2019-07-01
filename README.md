@@ -7,9 +7,11 @@ This process was orinally planned to support the ArcGIS Feature Service: [Plan R
 The L&I inspection district responsible to the property
 
 ### Corner Properties
+<pre>CORNER_PROPERTY</pre>
 Produced from a one-time GIS analysis of PWD Parcels and their proximity to street centerlines.  There is no plan to automate this process, but parcels incorrectly labeled as 'corner properties' can be manually removed by L&I BIDV/GIS upon request.
 
 ### Philadelphia Art Commission (PAC) Review
+<pre>PAC_FLAG</pre>
 The PAC review layer indicates one of three review types:
 * **Building ID Signage Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Basemap as:<br>
   * ICMX
@@ -37,6 +39,7 @@ The PAC review layer indicates one of three review types:
   
 
 ### Philadelphia City Planning Commission (PCPC) Review
+<pre>PCPC_FLAG</pre>
 The PCPC review layer indicates one of eight review types, although two (100 Year Floodplain and Steep Slopes) reside in their own data layers:
 * **City Ave Site Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
   * CAO City Avenue Overlay District - City Avenue Regional Center Area
@@ -64,15 +67,19 @@ The PCPC review layer indicates one of eight review types, although two (100 Yea
   * WWO Wissahickon Watershed Overlay District
 
 #### 100 Year Floodplain Review (1% Chance of annual flood)
+<pre>FLOODPLAIN</pre>
 A floodplain review is triggered on areas defined as the 100 Year Floodplain/1% Chance Annual Flood by the FEMA Floodplain map.
 
 #### Steep Slope Review
+<pre>STEEP_SLOPE</pre>
 A steep slope review is triggered on areas that fall within the bounds of the Steep Slope Overlay as defined by city ordinance [14-704(2)](http://library.amlegal.com/nxt/gateway.dll/Pennsylvania/philadelphia_pa/title14zoningandplanning/chapter14-700developmentstandards?f=templates$fn=default.htm$3.0$vid=amlegal:philadelphia_pa$anc=JD_14-704(2)) .
 
 ### Philadelphia Historic Commission (PHC) Review
+<pre>PHC_FLAG</pre>
 The PHC review layer indicates a historic review flag.  A historic review is triggered on areas that are defined by the Philadelphia Register of Historic Places.
 
 ### Philadelphia Water Department (PWD) Plan Review
+<pre>PWD_FLAG</pre>
 The PWD review layer indicates a one of two PWD related reviews:
 * **Green Roof Review -** This review is triggered on any property that houses a green roof as located within the Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
 * **Green Stormwater Infrastructure Buffer -** This review is triggered on any property that falls within a 500 foot buffer of any green infrastructure project as located within Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
