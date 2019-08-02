@@ -161,7 +161,7 @@ try:
     zoneCursor = arcpy.da.UpdateCursor(PR_FLAG_Temp, ['PWD_PARCEL_ID', 'ZONING_RCO'])
     print('Starting Cursor')
     for parcel in zoneCursor:
-        if parcel[0] in parcelDict:
+        if str(parcel[0]) in parcelDict:
             parcel[1] = '|'.join([str(oid) for oid in parcelDict.get(parcel[0])])
             zoneCursor.updateRow(parcel)
     del zoneCursor
@@ -178,7 +178,7 @@ except:
     from email.mime.text import MIMEText
     from phila_mail import server
     sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov', 'Jessica.bradley@phila.gov']
     commaspace = ', '
     msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
     msg['To'] = commaspace.join(recipientslist)

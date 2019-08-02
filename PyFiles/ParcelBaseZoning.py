@@ -182,11 +182,10 @@ try:
         count += 1
         if count in breaks:
             print('Adding Addresses to table ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-        zoneCursor2.insertRow([k, '|'.join(v[0]), v[-1]] + [0] * len(flagFields))
+        zoneCursor2.insertRow([str(k), '|'.join(v[0]), v[-1]] + [0] * len(flagFields))
     arcpy.Append_management(remainingParcels, PR_FLAG_Temp, 'NO_TEST')
     arcpy.Delete_management(remainingParcels)
     log.info('PR Flags Part 2 Complete')
-
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
@@ -198,7 +197,7 @@ except:
     from email.mime.text import MIMEText
     from phila_mail import server
     sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov', 'Jessica.bradley@phila.gov']
     commaspace = ', '
     msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
     msg['To'] = commaspace.join(recipientslist)

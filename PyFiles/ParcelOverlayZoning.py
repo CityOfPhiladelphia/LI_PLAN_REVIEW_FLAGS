@@ -166,12 +166,11 @@ try:
     zoneCursor = arcpy.da.UpdateCursor(PR_FLAG_Temp, ['PWD_PARCEL_ID', 'OVERLAY_ZONING'])
     print('Starting Cursor')
     for parcel in zoneCursor:
-        if parcel[0] in parcelDict:
+        if str(parcel[0]) in parcelDict:
             parcel[1] = '|'.join(parcelDict.get(parcel[0]))
             zoneCursor.updateRow(parcel)
     del zoneCursor
     log.info('PR Flags Part 3 Complete')
-
 
 except:
     tb = sys.exc_info()[2]
@@ -184,7 +183,7 @@ except:
     from email.mime.text import MIMEText
     from phila_mail import server
     sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov', 'Jessica.bradley@phila.gov']
     commaspace = ', '
     msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
     msg['To'] = commaspace.join(recipientslist)

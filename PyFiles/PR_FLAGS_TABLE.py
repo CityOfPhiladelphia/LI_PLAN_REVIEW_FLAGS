@@ -36,7 +36,6 @@ except:
     arcpy.AddError(pymsg)
     sys.exit(1)
 
-
 try:
     log.info('Beginning PR Flags Part 1')
 
@@ -55,7 +54,7 @@ try:
     Zoning_SteepSlopeProtectArea_r = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_SteepSlopeProtectArea_r'
     GSI_SMP_TYPES = DataBridge.sde_path+'\\GIS_WATER.GSI_SMP_TYPES'
     GISLNI_Corner_Properties = GISLNI.sde_path+'\\GIS_LNI.PR_CORNER_PROPERTIES'
-    GISLNI_Districts = GISLNI.sde_path+'\\GIS_LNI.DISTRICTS_BROAD'
+    DataBridge_Districts = DataBridge.sde_path+'\\GIS_LNI.LI_DISTRICTS'
     Council_Districts_2016 = DataBridge.sde_path+'\\GIS_PLANNING.Council_Districts_2016'
 
     # Internal data sources
@@ -143,7 +142,7 @@ try:
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
     print('Copying Districts Local')
-    arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Districts, localWorkspace, Districts)
+    arcpy.FeatureClassToFeatureClass_conversion(DataBridge_Districts, localWorkspace, Districts)
     print ('Spatial Joining Parcels and Districts')
     #Creates District Field in Parcel FC
     arcpy.SpatialJoin_analysis(PWD_Parcels_Local, Districts, PWD_PARCELS_SJ)
@@ -376,7 +375,7 @@ try:
         count += 1
         if count in breaks:
             arcpy.AddMessage('Creation of Table Rows ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-        parcelID = k
+        parcelID = str(k)
         address = v['Address']
         pacBool = 1 if v['PAC'] else 0
         pac = '|'.join(v['PAC'])
@@ -394,6 +393,7 @@ try:
         flagCursor.insertRow([address, parcelID, pacBool, pac, pcpcBool, pcpc, phcBool, phc, pwdBool, pwd, corner, area, district, flood, slope])
 
     log.info('PR Flags Part 1 complete')
+
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
@@ -405,7 +405,7 @@ except:
     from email.mime.text import MIMEText
     from phila_mail import server
     sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov']
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov', 'Jessica.bradley@phila.gov']
     commaspace = ', '
     msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
     msg['To'] = commaspace.join(recipientslist)
