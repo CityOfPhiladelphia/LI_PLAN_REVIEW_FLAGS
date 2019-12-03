@@ -357,6 +357,15 @@ try:
             inputs = tuple(r[:] + [localWorkspace, tempParcels, parcelDict])
             parcelFlag(*inputs)
 
+    #Step 19b: Add remaining parcels to table
+    remainingCursor = arcpy.da.SearchCursor(PWD_Spatial_Join, ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
+    print('Adding remaining parcels to dictionary')
+    for row in remainingCursor:
+        if row[0] not in parcelDict:
+            parcelDict[row[0]] = {'Address': row[1], 'PAC': [], 'PCPC': [], 'TempPCPC': [], 'PHC': [], 'PWD': [], 'SteepSlope': 0,
+                        'Floodplain': 0, 'CornerProp': row[3], 'ParcelArea': row[4], 'BaseZoning': [],
+                        'OverlayZoning': [], 'District': row[2]}
+    del remainingCursor
 
     #Step 20: Update Flags Table
     arcpy.CreateTable_management(localWorkspace, Flags_Table_Temp, PR_FLAG_SUMMARY)
