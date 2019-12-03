@@ -6,6 +6,7 @@ import traceback
 from datetime import timedelta
 
 import arcpy
+from Update_Local_GDB.Update_Feature_Class import Update
 from sde_connections import DataBridge, GISLNI
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -97,12 +98,16 @@ try:
     print('SUCCESS at Step 2')
 
 
-    #Step 3A: Build Initial PWD Spatial Join Data
-    print('Building parcel layer..')
+    #Step 3A: Update Local Copies of DataBridge Files
+    Zon_BaseDistricts = Update(Zon_BaseDistricts, Zoning_BaseDistricts, 7, localWorkspace).rebuild()
+    Zon_Overlays = Update(Zon_Overlays, Zoning_Overlays, 7, localWorkspace).rebuild()
+    Council_Districts_Local = Update(Council_Districts_Local, Council_Districts_2016, 7, localWorkspace).rebuild()
 
-    localFiles = [[Zon_BaseDistricts, Zoning_BaseDistricts], [Zon_Overlays, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge],
-                  [Council_Districts_Local, Council_Districts_2016]]
 
+
+    #localFiles = [[Zon_BaseDistricts, Zoning_BaseDistricts], [Zon_Overlays, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
+    #TODO Code until TODO END is temporary until new process for combining parks and pwd parcels
+    localFiles = [[PWD_Parcels_Local, PWD_PARCELS_DataBridge]]  #TODO TEMP FOR TESTING
     locallySaved = arcpy.ListFeatureClasses()
 
     #Delete local files that are more than a week old
@@ -135,9 +140,9 @@ try:
     Zon_Overlays = localFiles[1][0]
     PWD_Parcels_Local = localFiles[2][0]
     Council_Districts_Local = localFiles[-1][0]
-
-    #del localFiles
-
+    
+    del localFiles
+    #TODO END
 
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
