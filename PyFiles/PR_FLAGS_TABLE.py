@@ -57,6 +57,7 @@ try:
     GISLNI_Corner_Properties = GISLNI.sde_path+'\\GIS_LNI.PR_CORNER_PROPERTIES'
     DataBridge_Districts = DataBridge.sde_path+'\\GIS_LNI.LI_DISTRICTS'
     Council_Districts_2016 = DataBridge.sde_path+'\\GIS_PLANNING.Council_Districts_2016'
+    PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
 
     # Internal data sources
     PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
@@ -76,6 +77,9 @@ try:
     PAC_Intersect = 'G:\\01_Dan_Interrante_Project_Folder\\ToolScratch.gdb\\PAC_Intersect'
     Flags_Table_Temp = 'Flags_Table_Temp'
     Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
+    Park_IDs_Local = 'ParkNameIDs_' + today.strftime("%d%b%Y")
+    PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
+    PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
 
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path+'\\GIS_LNI.PR_PCPC_CityAveSiteReview'
@@ -94,7 +98,7 @@ try:
     GIS_LNI_PR_PWD_GreenRoofReview = GISLNI.sde_path+'\\GIS_LNI.PR_PWD_GreenRoofReview'
     GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path+'\\GIS_LNI.PR_PHC'
 
-    PR_FLAG_SUMMARY = GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY_TEST' #TODO Test
+    PR_FLAG_SUMMARY = GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY'
     print('SUCCESS at Step 2')
 
 
@@ -102,47 +106,83 @@ try:
     Zon_BaseDistricts = Update(Zon_BaseDistricts, Zoning_BaseDistricts, 7, localWorkspace).rebuild()
     Zon_Overlays = Update(Zon_Overlays, Zoning_Overlays, 7, localWorkspace).rebuild()
     Council_Districts_Local = Update(Council_Districts_Local, Council_Districts_2016, 7, localWorkspace).rebuild()
+    PWD_Parcels_Local = Update(PWD_Parcels_Local, PWD_PARCELS_DataBridge, 7, localWorkspace).rebuild()
 
 
+    #Step 3B: Merge Parks with Parcels
 
-    #localFiles = [[Zon_BaseDistricts, Zoning_BaseDistricts], [Zon_Overlays, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
-    #TODO Code until TODO END is temporary until new process for combining parks and pwd parcels
-    localFiles = [[PWD_Parcels_Local, PWD_PARCELS_DataBridge]]  #TODO TEMP FOR TESTING
-    locallySaved = arcpy.ListFeatureClasses()
+    # Determine if PPR Assets has been updated in the last week, if so execute
+    previousTables = sorted(
+        [[f] + f.split('_') for f in arcpy.ListTables() if f.split('_')[0] == Park_IDs_Local.split('_')[0]],
+        key=lambda r: r[-1], reverse=True)
+    print(previousTables)
+    if len(previousTables) > 1:
+        print('Multiple tables detected')
+        for t in previousTables[1:]:
+            print(t)
+            arcpy.Delete_management(t[0])
 
-    #Delete local files that are more than a week old
-    if locallySaved is not None:
-        deleteFiles = [fc for fc in locallySaved if (fc.endswith(str(datetime.datetime.now().year)) or fc.endswith(str(int(datetime.datetime.now().year)-1))) and datetime.datetime.strptime(fc.split('_')[-1], "%d%b%Y") < oneWeekAgo]
-        for f in deleteFiles:
-            print('Removing ' + f)
-            locallySaved.remove(f)
-        print('Checking for local versions of files')
-        for fc in deleteFiles:
-            print('Deleting ' + fc)
-            arcpy.Delete_management(fc)
+    if previousTables[0][2] != PWD_Parcels_Local.split('_')[1]:
+        print('Updating Parks Table')
+        previousTable = previousTables[0][0]
+        print(previousTable)
+        del previousTables
+        print('Copying Parks Local')
+        arcpy.FeatureClassToFeatureClass_conversion(PPR_Assets, inMemory, 'PPR_Assets_Temp_Pre_Dissolve')
+        print('Dissolving Parks Polygons')
+        arcpy.Dissolve_management(PPR_Assets_Temp_Pre_Dissolve, PPR_Assets_Temp, ['CHILD_OF'])
+        print('Deleting undissolved layer')
+        arcpy.Delete_management(PPR_Assets_Temp_Pre_Dissolve)
+        print('Adding and calculating geometry')
+        arcpy.AddGeometryAttributes_management(PPR_Assets_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
+        arcpy.AddField_management(PPR_Assets_Temp, 'PARCEL_AREA', 'LONG')
+        #arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
+        arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
 
+        # Pull all currently posted park names and compare to previous
+        cursor1 = arcpy.da.SearchCursor(PPR_Assets_Temp, ['CHILD_OF'])
+        currentParks = [row[0] for row in cursor1]
+        del cursor1
+        print(previousTable)
+        print([f.name for f in arcpy.ListFields(previousTable)])
+        cursor2 = arcpy.da.SearchCursor(previousTable, ['CHILD_OF', 'LI_TEMP_ID'])
+        parkDict = {row[0]: row[1] for row in cursor2}
+        del cursor2
+        # The IDs are negative so we're looking for the next LOWEST value to add
+        minID = min([id for id in parkDict.values()])
+        for p in currentParks:
+            if p not in parkDict:
+                minID -= 1
+                parkDict[p] = minID
 
-    #If there are no local files less than a week old, copy a new one
-    for localF in localFiles:
-        localName = localF[0].split('_')[0]
-        if localF[0].split('_')[0] not in [l.split('_')[0] for l in locallySaved]:
-            print('Copying ' + localName)
-            arcpy.FeatureClassToFeatureClass_conversion(localF[1], localWorkspace, localF[0])
-        else:
-            listIndex = None
-            for fc in locallySaved:
-                if fc.startswith(localName):
-                    listIndex = locallySaved.index(fc)
-                    break
-            print('Changing variable for ' + localName + ' to exisiting local copy')
-            localF[0] = locallySaved[listIndex]
-    Zon_BaseDistricts = localFiles[0][0]
-    Zon_Overlays = localFiles[1][0]
-    PWD_Parcels_Local = localFiles[2][0]
-    Council_Districts_Local = localFiles[-1][0]
-    
-    del localFiles
-    #TODO END
+        # Create a new table schema and populate it
+        arcpy.CreateTable_management(localWorkspace, Park_IDs_Local, previousTable)
+        cursor3 = arcpy.da.InsertCursor(Park_IDs_Local, ['CHILD_OF', 'LI_TEMP_ID'])
+        print([f.name for f in arcpy.ListFields(Park_IDs_Local)])
+        for k, v in parkDict.items():
+            cursor3.insertRow([k, v])
+        arcpy.Delete_management(previousTable)
+        del cursor3
+
+        # Join Park IDs to Temp Parks Layer
+        arcpy.JoinField_management(PPR_Assets_Temp, 'CHILD_OF', Park_IDs_Local, 'CHILD_OF', ['LI_TEMP_ID'])
+
+        # Map Fields for Append
+        fms = arcpy.FieldMappings()
+        fm_ID = arcpy.FieldMap()
+        fm_ID.addInputField(PPR_Assets_Temp, 'LI_TEMP_ID')
+        fm_ID_Out = fm_ID.outputField
+        fm_ID_Out.name = 'PARCELID'
+        fm_ID.outputField = fm_ID_Out
+        fm_Area = arcpy.FieldMap()
+        fm_Area.addInputField(PPR_Assets_Temp, 'PARCEL_AREA')
+        fm_Area_Out = fm_Area.outputField
+        fm_Area_Out.name = 'GROSS_AREA'
+        fm_Area.outputField = fm_Area_Out
+        fms.addFieldMap(fm_ID)
+        fms.addFieldMap(fm_Area)
+        arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Local)
+        arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Local, schema_type='NO_TEST', field_mapping=fms)
 
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
@@ -168,7 +208,7 @@ try:
     ############################################################################################################
 
 
-    # Step 3: Create plan review feature classes
+    # Step 3C: Create plan review feature classes
 
     print('Copying Overlays local')
     #arcpy.FeatureClassToFeatureClass_conversion(Zoning_BaseDistricts, localWorkspace, Zon_BaseDistricts)
@@ -203,7 +243,7 @@ try:
 
             if '_Buffer' in reviewName:
                 print('Buffering')
-                arcpy.Buffer_analysis(sourceFC, reviewLayer, '500 Feet')
+                arcpy.Buffer_analysis(sourceFC, reviewLayer, '50 Feet')
             else:
                 print('Creating Local FC for ' + reviewName)
                 arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,

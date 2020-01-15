@@ -5,6 +5,7 @@ import traceback
 from datetime import timedelta
 
 import arcpy
+from Update_Local_GDB.Update_Feature_Class import Update
 from sde_connections import DataBridge
 
 # Step 1: Configure log file
@@ -19,6 +20,7 @@ try:
     hdlr.setFormatter(hdlrFormatter)
     log.addHandler(hdlr)
     print('SUCCESS at Step 1')
+
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
@@ -42,8 +44,12 @@ try:
     zoningCurrent = 'ZoningCurrent'
 
     PR_FLAG_Temp = 'Flags_Table_Temp'
-    PWD_Parcels_Local = 'PWD_Parcels_'+ today.strftime("%d%b%Y")
+    PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
     Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
+    PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
+    PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
+    PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
+    Park_IDs_Local = 'ParkNameIDs_' + today.strftime("%d%b%Y")
 
     localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
     inMemory = 'in_memory'
@@ -52,37 +58,92 @@ try:
     arcpy.env.overwriteOutput = True
     locallySaved = arcpy.ListFeatureClasses()
 
-    #Delete local files that are more than a week old
+    ############################################
+    #THIS IS THE PART FOR COPYING LOCAL
 
-    deleteFiles = [fc for fc in locallySaved if (fc.endswith(str(datetime.datetime.now().year)) or fc.endswith(str(int(datetime.datetime.now().year)-1))) and datetime.datetime.strptime(fc.split('_')[-1], "%d%b%Y") < oneWeekAgo]
-    print('Checking for local versions of files')
-    for fc in deleteFiles:
-        print('Deleting ' + fc)
-        arcpy.Delete_management(fc)
-    localFiles = [[zoningFC, Zoning_Overlays], [PWD_Parcels_Local, PWD_PARCELS_DataBridge], [Council_Districts_Local, Council_Districts_2016]]
+    # Update Local Copies of DataBridge Files
+    localTables = arcpy.ListFeatureClasses('PWD_*')
+    for t in localTables:
+        arcpy.Delete_management(t)
+    zoningFC = Update(zoningFC, Zoning_Overlays, 7, localWorkspace).rebuild()
+    Council_Districts_Local = Update(Council_Districts_Local, Council_Districts_2016, 7, localWorkspace).rebuild()
+    PWD_Parcels_Local = Update(PWD_Parcels_Local, PWD_PARCELS_DataBridge, 7, localWorkspace).rebuild()
 
-    #If there are no local files less than a week old, copy a new one
-    #TODO get this to stop unecessary copies
+    # Merge Parks with Parcels
 
-    for localF in localFiles:
-        localName = localF[0].split('_')[0]
-        if not any(fc.startswith(localName) for fc in locallySaved):
-            print('Copying ' + localName)
-            arcpy.FeatureClassToFeatureClass_conversion(localF[1], localWorkspace, localF[0])
-        else:
-            listIndex = None
-            for fc in locallySaved:
-                if fc.startswith(localName):
-                    listIndex = locallySaved.index(fc)
-                    break
-            print('Changing variable for ' + localName + ' to exisiting local copy')
-            localF[0] = locallySaved[listIndex]
-    zoningFC = localFiles[0][0]
-    PWD_Parcels_Local = localFiles[1][0]
-    Council_Districts_Local = localFiles[2][0]
+    # Determine if PPR Assets has been updated in the last week, if so execute
+    previousTables = sorted(
+        [[f] + f.split('_') for f in arcpy.ListTables() if f.split('_')[0] == Park_IDs_Local.split('_')[0]],
+        key=lambda r: r[-1], reverse=True)
+    print(previousTables)
+    if len(previousTables) > 1:
+        print('Multiple tables detected')
+        for t in previousTables[1:]:
+            print(t)
+            arcpy.Delete_management(t[0])
 
-    del localFiles
+    if previousTables[0][2] != PWD_Parcels_Local.split('_')[1]:
+        print('Updating Parks Table')
+        previousTable = previousTables[0][0]
+        print(previousTable)
+        del previousTables
+        print('Copying Parks Local')
+        arcpy.FeatureClassToFeatureClass_conversion(PPR_Assets, inMemory, 'PPR_Assets_Temp_Pre_Dissolve')
+        print('Dissolving Parks Polygons')
+        arcpy.Dissolve_management(PPR_Assets_Temp_Pre_Dissolve, PPR_Assets_Temp, ['CHILD_OF'])
+        print('Deleting undissolved layer')
+        arcpy.Delete_management(PPR_Assets_Temp_Pre_Dissolve)
+        print('Adding and calculating geometry')
+        arcpy.AddGeometryAttributes_management(PPR_Assets_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
+        arcpy.AddField_management(PPR_Assets_Temp, 'PARCEL_AREA', 'LONG')
+        # arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
+        arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
 
+        # Pull all currently posted park names and compare to previous
+        cursor1 = arcpy.da.SearchCursor(PPR_Assets_Temp, ['CHILD_OF'])
+        currentParks = [row[0] for row in cursor1]
+        del cursor1
+        print(previousTable)
+        print([f.name for f in arcpy.ListFields(previousTable)])
+        cursor2 = arcpy.da.SearchCursor(previousTable, ['CHILD_OF', 'LI_TEMP_ID'])
+        parkDict = {row[0]: row[1] for row in cursor2}
+        del cursor2
+        # The IDs are negative so we're looking for the next LOWEST value to add
+        minID = min([id for id in parkDict.values()])
+        for p in currentParks:
+            if p not in parkDict:
+                minID -= 1
+                parkDict[p] = minID
+
+        # Create a new table schema and populate it
+        arcpy.CreateTable_management(localWorkspace, Park_IDs_Local, previousTable)
+        cursor3 = arcpy.da.InsertCursor(Park_IDs_Local, ['CHILD_OF', 'LI_TEMP_ID'])
+        print([f.name for f in arcpy.ListFields(Park_IDs_Local)])
+        for k, v in parkDict.items():
+            cursor3.insertRow([k, v])
+        arcpy.Delete_management(previousTable)
+        del cursor3
+
+        # Join Park IDs to Temp Parks Layer
+        arcpy.JoinField_management(PPR_Assets_Temp, 'CHILD_OF', Park_IDs_Local, 'CHILD_OF', ['LI_TEMP_ID'])
+
+        # Map Fields for Append
+        fms = arcpy.FieldMappings()
+        fm_ID = arcpy.FieldMap()
+        fm_ID.addInputField(PPR_Assets_Temp, 'LI_TEMP_ID')
+        fm_ID_Out = fm_ID.outputField
+        fm_ID_Out.name = 'PARCELID'
+        fm_ID.outputField = fm_ID_Out
+        fm_Area = arcpy.FieldMap()
+        fm_Area.addInputField(PPR_Assets_Temp, 'PARCEL_AREA')
+        fm_Area_Out = fm_Area.outputField
+        fm_Area_Out.name = 'GROSS_AREA'
+        fm_Area.outputField = fm_Area_Out
+        fms.addFieldMap(fm_ID)
+        fms.addFieldMap(fm_Area)
+        arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Local)
+        arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Local, schema_type='NO_TEST', field_mapping=fms)
+    ############################
     #Append all ROC Names to a list.  Each RCO will be iterated through and added to the dictionary
     print(zoningFC)
     print([f.name for f in arcpy.ListFields(zoningFC)])
@@ -93,7 +154,7 @@ try:
 
     #Create lookup dictionary for RCO Objectid names:
     from li_dbs_Lazy import DataBridge
-    lookupSQL = "select OBJECTID, ORGANIZATION_NAME from GIS_PLANNING.ZONING_RCO"
+    lookupSQL = "select LNI_ID, ORGANIZATION_NAME from GIS_PLANNING.ZONING_RCO"
     lookupCursor = DataBridge.DataBridge.cursor()
     lookupCursor.execute(lookupSQL)
     lookupDict = {row[1]:row[0] for row in lookupCursor.fetchall()}
@@ -106,13 +167,12 @@ try:
     arcpy.MakeFeatureLayer_management(zoningFC, zoningLayer)
     parcelDict = {}
     for overlayType in rcoIDS:
-        #if overlayCount == 0: #######################  <-----------
         arcpy.env.workspace = localWorkspace
         overlayCount += 1
         print('Starting ' + str(overlayType) + ', ' + str(overlayCount)+ ' of ' + str(overlayTotal))
         arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "ORGANIZATION_NAME = '" + str(overlayType if "'" not in overlayType else overlayType.replace("'", "|| CHR(39) ||")) + "'")
         arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
-        IntersectOutput = localWorkspace + '\\' + zoningFC + '_Int'
+        IntersectOutput = localWorkspace + '\\' + 'Int_' + zoningFC
         arcpy.Intersect_analysis([PWD_Parcels_Local] + [zoningCurrent], IntersectOutput, 'ALL')
         '''
         # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
@@ -136,7 +196,7 @@ try:
         for row in IntersectCursor:
             count += 1
             if count in breaks:
-                print('Parsing Zoning FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
+                print('Parsing RCO FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
             # if (row[2] / float(row[1])) > 0.01:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
             if row[fieldList.index('PARCELID')] in parcelDict:
                 tempList = parcelDict.get(row[0])
@@ -144,24 +204,13 @@ try:
             else:
                 parcelDict[row[fieldList.index('PARCELID')]] = [lookupDict[row[fieldList.index('ORGANIZATION_NAME')]]]
         arcpy.Delete_management(IntersectOutput)
-
-
-        currentTract = 'CurrentDistrict'
-        tempParcels = 'TempParcels'
-        tempZone = 'TempZone'
-        districtCount = 0
-        districtTotal = int(arcpy.GetCount_management(Council_Districts_Local).getOutput(0))
-        arcpy.CalculateField_management(Council_Districts_Local, 'DISTRICT', '!DISTRICT!.strip(' ')', 'PYTHON_9.3')
-        districtTileCursor = arcpy.da.SearchCursor(Council_Districts_Local, 'DISTRICT')
-
-        del districtTileCursor
         arcpy.Delete_management(zoningCurrent)
         arcpy.SelectLayerByAttribute_management(zoningLayer, 'CLEAR_SELECTION')
     del rcoIDS
     zoneCursor = arcpy.da.UpdateCursor(PR_FLAG_Temp, ['PWD_PARCEL_ID', 'ZONING_RCO'])
     print('Starting Cursor')
     for parcel in zoneCursor:
-        if str(parcel[0]) in parcelDict:
+        if parcel[0] in parcelDict:
             parcel[1] = '|'.join([str(oid) for oid in parcelDict.get(parcel[0])])
             zoneCursor.updateRow(parcel)
     del zoneCursor

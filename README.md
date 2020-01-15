@@ -82,5 +82,5 @@ The PHC review layer indicates a historic review flag.  A historic review is tri
 <pre>PWD_FLAG</pre>
 The PWD review layer indicates a one of two PWD related reviews:
 * **Green Roof Review -** This review is triggered on any property that houses a green roof as located within the Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
-* **Green Stormwater Infrastructure Buffer -** This review is triggered on any property that falls within a 500 foot buffer of any green infrastructure project as located within Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
+* **Green Stormwater Infrastructure Buffer -** This review is triggered on any property that falls within a 50 foot buffer of any green infrastructure project as located within Philadelphia Water Department's Green Stormwater Infrasture Project dataset.
 
