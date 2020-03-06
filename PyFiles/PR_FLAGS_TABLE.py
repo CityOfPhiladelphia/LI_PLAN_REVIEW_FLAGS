@@ -13,6 +13,8 @@ localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
 inMemory = 'in_memory'
 arcpy.env.overwriteOutput = True
 arcpy.env.workspace = localWorkspace
+editDB = GISLNI.sde_path
+edit = arcpy.da.Editor(editDB)
 print('''Starting script 'PermitReviewScripts.py'...''')
 
 
@@ -58,6 +60,7 @@ try:
     DataBridge_Districts = DataBridge.sde_path+'\\GIS_LNI.LI_DISTRICTS'
     Council_Districts_2016 = DataBridge.sde_path+'\\GIS_PLANNING.Council_Districts_2016'
     PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
+    Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
 
     # Internal data sources
     PWD_Parcels_Local = 'PWDParcels_'+ today.strftime("%d%b%Y")
@@ -78,6 +81,7 @@ try:
     Flags_Table_Temp = 'Flags_Table_Temp'
     Council_Districts_Local = 'Districts_'+ today.strftime("%d%b%Y")
     Park_IDs_Local = 'ParkNameIDs_' + today.strftime("%d%b%Y")
+    PPR_Assets_Local = 'PPRAssests_' + today.strftime("%d%b%Y")
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
 
@@ -102,70 +106,55 @@ try:
     print('SUCCESS at Step 2')
 
 
-    #Step 3A: Update Local Copies of DataBridge Files
+    # Step 3A: Update Local Copies of DataBridge Files
     Zon_BaseDistricts = Update(Zon_BaseDistricts, Zoning_BaseDistricts, 7, localWorkspace).rebuild()
     Zon_Overlays = Update(Zon_Overlays, Zoning_Overlays, 7, localWorkspace).rebuild()
     Council_Districts_Local = Update(Council_Districts_Local, Council_Districts_2016, 7, localWorkspace).rebuild()
     PWD_Parcels_Local = Update(PWD_Parcels_Local, PWD_PARCELS_DataBridge, 7, localWorkspace).rebuild()
+    PPR_Assets_Local = Update(PPR_Assets_Local, PPR_Assets, 7, localWorkspace).rebuild()
 
-
-    #Step 3B: Merge Parks with Parcels
-
-    # Determine if PPR Assets has been updated in the last week, if so execute
-    previousTables = sorted(
-        [[f] + f.split('_') for f in arcpy.ListTables() if f.split('_')[0] == Park_IDs_Local.split('_')[0]],
-        key=lambda r: r[-1], reverse=True)
-    print(previousTables)
-    if len(previousTables) > 1:
-        print('Multiple tables detected')
-        for t in previousTables[1:]:
-            print(t)
-            arcpy.Delete_management(t[0])
-
-    if previousTables[0][2] != PWD_Parcels_Local.split('_')[1]:
-        print('Updating Parks Table')
-        previousTable = previousTables[0][0]
-        print(previousTable)
-        del previousTables
-        print('Copying Parks Local')
-        arcpy.FeatureClassToFeatureClass_conversion(PPR_Assets, inMemory, 'PPR_Assets_Temp_Pre_Dissolve')
+    # Step 3B: Merge Parks with Parcels
+    #Determine if parks have been added yet
+    tCursor = arcpy.da.SearchCursor(PWD_Parcels_Local, 'PARCELID')
+    print('Identifying Lowest Parcel ID')
+    isNeg = min([int(row[0]) for row in tCursor])
+    del tCursor
+    if isNeg > 0:
+        log.info('Adding new park data')
+        print('Adding new park data')
+        cursor1 = arcpy.da.SearchCursor(Park_IDs, ['CHILD_OF', 'LI_TEMP_ID'])
+        parkDict = {row[0]: row[1] for row in cursor1}
+        del cursor1
+        minID = min([v for v in parkDict.values()])
         print('Dissolving Parks Polygons')
-        arcpy.Dissolve_management(PPR_Assets_Temp_Pre_Dissolve, PPR_Assets_Temp, ['CHILD_OF'])
-        print('Deleting undissolved layer')
-        arcpy.Delete_management(PPR_Assets_Temp_Pre_Dissolve)
+        arcpy.Dissolve_management(PPR_Assets_Local, PPR_Assets_Temp, ['CHILD_OF'])
+
+        #The IDs are negative so we're looking for the next LOWEST value to add
+        cursor2 = arcpy.da.SearchCursor(PPR_Assets_Temp, ['CHILD_OF'])
+        cursor2b = arcpy.da.InsertCursor(Park_IDs, ['CHILD_OF', 'LI_TEMP_ID'])
+        noChange = True
+        edit = arcpy.da.Editor(editDB)
+        edit.startEditing(False, True)
+        edit.startOperation()
+        for row in cursor2:
+            if row[0] not in parkDict:
+                noChange = False
+                minID -= 1
+                parkDict[row[0]] = minID
+                cursor2b.insertRow([row[0], minID])
+        del cursor2
+        del cursor2b
+        edit.stopOperation()
+        edit.stopEditing(True)
+
         print('Adding and calculating geometry')
         arcpy.AddGeometryAttributes_management(PPR_Assets_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
         arcpy.AddField_management(PPR_Assets_Temp, 'PARCEL_AREA', 'LONG')
         #arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
         arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
 
-        # Pull all currently posted park names and compare to previous
-        cursor1 = arcpy.da.SearchCursor(PPR_Assets_Temp, ['CHILD_OF'])
-        currentParks = [row[0] for row in cursor1]
-        del cursor1
-        print(previousTable)
-        print([f.name for f in arcpy.ListFields(previousTable)])
-        cursor2 = arcpy.da.SearchCursor(previousTable, ['CHILD_OF', 'LI_TEMP_ID'])
-        parkDict = {row[0]: row[1] for row in cursor2}
-        del cursor2
-        # The IDs are negative so we're looking for the next LOWEST value to add
-        minID = min([id for id in parkDict.values()])
-        for p in currentParks:
-            if p not in parkDict:
-                minID -= 1
-                parkDict[p] = minID
-
-        # Create a new table schema and populate it
-        arcpy.CreateTable_management(localWorkspace, Park_IDs_Local, previousTable)
-        cursor3 = arcpy.da.InsertCursor(Park_IDs_Local, ['CHILD_OF', 'LI_TEMP_ID'])
-        print([f.name for f in arcpy.ListFields(Park_IDs_Local)])
-        for k, v in parkDict.items():
-            cursor3.insertRow([k, v])
-        arcpy.Delete_management(previousTable)
-        del cursor3
-
         # Join Park IDs to Temp Parks Layer
-        arcpy.JoinField_management(PPR_Assets_Temp, 'CHILD_OF', Park_IDs_Local, 'CHILD_OF', ['LI_TEMP_ID'])
+        arcpy.JoinField_management(PPR_Assets_Temp, 'CHILD_OF', Park_IDs, 'CHILD_OF', ['LI_TEMP_ID'])
 
         # Map Fields for Append
         fms = arcpy.FieldMappings()
@@ -181,7 +170,7 @@ try:
         fm_Area.outputField = fm_Area_Out
         fms.addFieldMap(fm_ID)
         fms.addFieldMap(fm_Area)
-        arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Local)
+        #arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Local)
         arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Local, schema_type='NO_TEST', field_mapping=fms)
 
     print('Copying Corner Properties Local')
@@ -454,7 +443,7 @@ except:
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
     arcpy.AddError(pymsg)
     log.error(pymsg)
-
+    
     import smtplib
     from email.mime.text import MIMEText
     from phila_mail import server
