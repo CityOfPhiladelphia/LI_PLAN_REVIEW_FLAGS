@@ -131,8 +131,11 @@ try:
         cursor2b = arcpy.da.InsertCursor(Park_IDs, ['CHILD_OF', 'LI_TEMP_ID'])
         noChange = True
         edit = arcpy.da.Editor(editDB)
-        edit.startEditing(False, True)
-        edit.startOperation()
+        try:
+            edit.startEditing(False, True)
+            edit.startOperation()
+        except:
+            pass
         for row in cursor2:
             if row[0] not in parkDict:
                 noChange = False
@@ -141,8 +144,11 @@ try:
                 cursor2b.insertRow([row[0], minID])
         del cursor2
         del cursor2b
-        edit.stopOperation()
-        edit.stopEditing(True)
+        try:
+            edit.stopOperation()
+            edit.stopEditing(True)
+        except:
+            pass
 
         print('Adding and calculating geometry')
         arcpy.AddGeometryAttributes_management(PPR_Assets_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
