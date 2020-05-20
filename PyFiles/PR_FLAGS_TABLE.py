@@ -1,3 +1,11 @@
+"""
+Plan Review Flags - Part 1 of 5
+
+This script copies all source data local produces the individual flag attributes for every property.
+Base Zoning, Overlay Zoning, and RCO information are populated by subsequent scripts in this package.
+These processes were moved to separate scripts due to CPU memory issues
+The final product is pushed back to databridge in CopyToEnterprise.py
+"""
 import datetime
 import logging
 import sys
@@ -5,7 +13,6 @@ import traceback
 from datetime import timedelta
 
 import arcpy
-from Update_Local_GDB.Update_Feature_Class import Update
 from sde_connections import DataBridge, GISLNI
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -16,7 +23,6 @@ editDB = GISLNI.sde_path
 edit = arcpy.da.Editor(editDB)
 print('''Starting script 'PermitReviewScripts.py'...''')
 
-# TODO Check parameters for what is considered a corner property
 # Step 1: Configure log file
 try:
     print('Step 1: Configuring log file...')
@@ -61,25 +67,25 @@ try:
     Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
 
     # Internal data sources
-    PWD_Parcels_Local = 'PWDParcels_' + today.strftime("%d%b%Y")
+    PWD_Parcels_Local = 'PWDParcels_' 
     PWD_Spatial_Join = 'PWD_Spatial_Join'
     CornerProperties = 'Corner_Properties'
     PWD_PARCELS_SJ = 'PWD_PARCELS_Spatial_Join'
     CornerPropertiesSJ_P = 'CornerPropertiesSJ_P'
     Districts = 'Districts'
     Hist_Sites_PhilReg = 'Hist_Sites_PhilReg'
-    Zon_Overlays = 'ZoningOverlays_' + today.strftime("%d%b%Y")
+    Zon_Overlays = 'ZoningOverlays_' 
     Zoning_SteepSlope = 'PCPC_SteepSlope'
     PWD_GSI_SMP_TYPES = 'PWD_GSI_SMP_TYPES'
-    Zon_BaseDistricts = 'ZonBaseDistricts_' + today.strftime("%d%b%Y")
+    Zon_BaseDistricts = 'ZonBaseDistricts_' 
     ArtCommission_BuildingIDSinageReview = 'ArtCommission_BuildingIDSinageReview'
     FloodPlain100Yr = 'PCPC_100YrFloodPlain'
     PCPC_Intersect = 'G:\\01_Dan_Interrante_Project_Folder\\ToolScratch.gdb\\PCPC_Intersect'
     PAC_Intersect = 'G:\\01_Dan_Interrante_Project_Folder\\ToolScratch.gdb\\PAC_Intersect'
     Flags_Table_Temp = 'Flags_Table_Temp'
-    Council_Districts_Local = 'Districts_' + today.strftime("%d%b%Y")
-    Park_IDs_Local = 'ParkNameIDs_' + today.strftime("%d%b%Y")
-    PPR_Assets_Local = 'PPRAssests_' + today.strftime("%d%b%Y")
+    Council_Districts_Local = 'Districts_' 
+    Park_IDs_Local = 'ParkNameIDs_' 
+    PPR_Assets_Local = 'PPRAssests_' 
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
 
@@ -104,11 +110,26 @@ try:
     print('SUCCESS at Step 2')
 
     # Step 3A: Update Local Copies of DataBridge Files
-    Zon_BaseDistricts = Update(Zon_BaseDistricts, Zoning_BaseDistricts, 7, localWorkspace).rebuild()
-    Zon_Overlays = Update(Zon_Overlays, Zoning_Overlays, 7, localWorkspace).rebuild()
-    Council_Districts_Local = Update(Council_Districts_Local, Council_Districts_2016, 7, localWorkspace).rebuild()
-    PWD_Parcels_Local = Update(PWD_Parcels_Local, PWD_PARCELS_DataBridge, 7, localWorkspace).rebuild()
-    PPR_Assets_Local = Update(PPR_Assets_Local, PPR_Assets, 7, localWorkspace).rebuild()
+    print('Updating Zoning Base Districts')
+    if arcpy.Exists(Zon_BaseDistricts):
+        arcpy.Delete_management(Zon_BaseDistricts)
+    arcpy.FeatureClassToFeatureClass_conversion(Zoning_BaseDistricts, localWorkspace, Zon_BaseDistricts)
+    print('Updating Zoning Overlays')
+    if arcpy.Exists(Zon_Overlays):
+        arcpy.Delete_management(Zon_Overlays)
+    arcpy.FeatureClassToFeatureClass_conversion(Zoning_Overlays, localWorkspace, Zon_Overlays)
+    print('Updating Council Districts')
+    if arcpy.Exists(Council_Districts_Local):
+        arcpy.Delete_management(Council_Districts_Local)
+    arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_2016, localWorkspace, Council_Districts_Local)
+    print('Updating PWD Parcels')
+    if arcpy.Exists(PWD_Parcels_Local):
+        arcpy.Delete_management(PWD_Parcels_Local)
+    arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Local)
+    print('Updating PPR Assets')
+    if arcpy.Exists(PPR_Assets_Local):
+        arcpy.Delete_management(PPR_Assets_Local)
+    arcpy.FeatureClassToFeatureClass_conversion(PPR_Assets, localWorkspace, PPR_Assets_Local)
 
     # Step 3B: Merge Parks with Parcels
     # Determine if parks have been added yet
@@ -399,7 +420,7 @@ try:
             inputs = tuple(r[:] + [localWorkspace, tempParcels, parcelDict])
             parcelFlag(*inputs)
 
-    # Step 19b: Add remaining parcels to table
+    # Add remaining parcels to table
     remainingCursor = arcpy.da.SearchCursor(PWD_Spatial_Join, ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
     print('Adding remaining parcels to dictionary')
     for row in remainingCursor:
@@ -410,7 +431,7 @@ try:
                                   'OverlayZoning': [], 'District': row[2]}
     del remainingCursor
 
-    # Step 20: Update Flags Table
+    # Update Flags Table
     arcpy.CreateTable_management(localWorkspace, Flags_Table_Temp, PR_FLAG_SUMMARY)
     # ParcelDict Schema: {PWD_PARCELID:{Address:'', PAC:[], PCPC:[], PHC:[], PWD:[], 'SteepSlope':bool, 'Floodplain':bool, CornerProp:bool, ParcelArea:'', BaseZoning:[], OverlayZoning:[], LIDistrict:''}
     flagFields = [f.name for f in arcpy.ListFields(Flags_Table_Temp)]

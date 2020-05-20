@@ -1,3 +1,9 @@
+"""
+Plan Review Flags - Part 5 of 5
+
+This script populates the Zoning RCO value for every property value.
+This process must be run immediately after Parts 1-4 as pushes the now up to date data back to DataBridge and GISLNI
+"""
 import logging
 import sys
 import traceback

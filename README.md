@@ -1,5 +1,5 @@
 # L&I Plan Review Flags For Eclipse
-This process was orinally planned to support the ArcGIS Feature Service: [Plan Review Flags Eclipse](http://phl.maps.arcgis.com/home/item.html?id=7a474e2bb78b4f258751e22161e4cc75).  This has been since modified to support the GIS_LNI.LI_PR_FLAG_SUMMARY table on DataBridge gis_sde_viewer.  This table represents applicable zoning review data based on that parcel's [PWD_PARCEL's](http://metadata.phila.gov/#home/datasetdetails/5543864620583086178c4e7a/representationdetails/55438a829b989a05172d0cfa/) geometry in GIS.  
+This process was originally planned to support the ArcGIS Feature Service: [Plan Review Flags Eclipse](http://phl.maps.arcgis.com/home/item.html?id=7a474e2bb78b4f258751e22161e4cc75).  This has been since modified to support the GIS_LNI.LI_PR_FLAG_SUMMARY table on DataBridge gis_sde_viewer.  This table represents applicable zoning review data based on that parcel's [PWD_PARCEL's](http://metadata.phila.gov/#home/datasetdetails/5543864620583086178c4e7a/representationdetails/55438a829b989a05172d0cfa/) geometry in GIS.  
 
 ## Property Data Displayed with table
 ### Inspection Districts
