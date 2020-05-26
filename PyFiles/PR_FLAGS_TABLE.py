@@ -284,7 +284,7 @@ try:
             arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
             arcpy.AddField_management(IntersectOutput, 'POLY_AREA',
                                       'FLOAT')  # This is a dummy field to statisfy cursor, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
-            """ #NOTE Thiness calculation was removed by request
+            """ #NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
             arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
