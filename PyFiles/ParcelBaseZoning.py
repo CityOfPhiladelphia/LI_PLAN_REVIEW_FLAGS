@@ -51,7 +51,7 @@ try:
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
     Park_IDs_Local = 'ParkNameIDs_' 
-    PWD_Parcels_Local = 'PWDParcels_'
+    PWD_Parcels_Working = 'PWDParcels_Working'
     Council_Districts_Local = 'Districts_'
 
     localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -76,8 +76,12 @@ try:
         districtCount += 1
         print('Processing District ' + tract[0] + "\n" + str((float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
         arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract, "DISTRICT = '" + tract[0] + "'")
+        if arcpy.Exists(tempZone):
+            arcpy.Delete_management(tempZone)
         arcpy.Clip_analysis(localWorkspace + '\\' + zoningFC, currentTract, tempZone)
-        arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Local, currentTract, tempParcels)
+        if arcpy.Exists(tempParcels):
+            arcpy.Delete_management(tempParcels)
+        arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Working, currentTract, tempParcels)
         IntersectOutput = localWorkspace + '\\' + zoningFC + '_Int'
         print('Running Intersect')
         arcpy.Intersect_analysis([tempParcels] + [tempZone], IntersectOutput, 'ALL')

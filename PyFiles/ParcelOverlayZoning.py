@@ -52,7 +52,7 @@ try:
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
     Park_IDs_Local = 'ParkNameIDs_' 
-    PWD_Parcels_Local = 'PWDParcels_'
+    PWD_Parcels_Working = 'PWDParcels_Working'
 
     localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
     inMemory = 'in_memory'
@@ -95,10 +95,14 @@ try:
                 (float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
             districtCount += 1
             arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract, "DISTRICT = '" + tract[0] + "'")
+            if arcpy.Exists(tempZone):
+                arcpy.Delete_management(tempZone)
             arcpy.Clip_analysis(zoningCurrent, currentTract, tempZone)
             if int(arcpy.GetCount_management(tempZone).getOutput(0)) >= 1:
                 print('Extracting Overlay')
-                arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Local, currentTract, tempParcels)
+                if arcpy.Exists(tempParcels):
+                    arcpy.Delete_management(tempParcels)
+                arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Working, currentTract, tempParcels)
                 IntersectOutput = localWorkspace + '\\' + zoningFC + '_Int'
                 print('Running Intersect')
                 arcpy.Intersect_analysis([tempParcels] + [tempZone], IntersectOutput, 'ALL')

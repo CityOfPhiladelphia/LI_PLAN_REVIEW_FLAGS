@@ -38,7 +38,7 @@ try:
     today = datetime.datetime.today()
     oneWeekAgo = today - timedelta(days=7)
 
-    Zoning_Overlays = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_RCO'
+    Zoning_RCOs = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_RCO'
 
     PWD_PARCELS_DataBridge = DataBridge.sde_path+'\\GIS_WATER.PWD_PARCELS'
 
@@ -49,7 +49,7 @@ try:
     zoningCurrent = 'ZoningCurrent'
 
     PR_FLAG_Temp = 'Flags_Table_Temp'
-    PWD_Parcels_Local = 'PWDParcels_'
+    PWD_Parcels_Working = 'PWDParcels_Working'
     Council_Districts_Local = 'Districts_'
     PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
@@ -64,6 +64,11 @@ try:
     locallySaved = arcpy.ListFeatureClasses()
 
     ############################
+    #Copy RCO Layer Local
+    if arcpy.Exists(zoningFC):
+        arcpy.Delete_management(zoningFC)
+    arcpy.FeatureClassToFeatureClass_conversion(Zoning_RCOs, localWorkspace, zoningFC)
+
     #Append all ROC Names to a list.  Each RCO will be iterated through and added to the dictionary
     print(zoningFC)
     print([f.name for f in arcpy.ListFields(zoningFC)])
@@ -93,7 +98,7 @@ try:
         arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "ORGANIZATION_NAME = '" + str(overlayType if "'" not in overlayType else overlayType.replace("'", "|| CHR(39) ||")) + "'")
         arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
         IntersectOutput = localWorkspace + '\\' + 'Int_' + zoningFC
-        arcpy.Intersect_analysis([PWD_Parcels_Local] + [zoningCurrent], IntersectOutput, 'ALL')
+        arcpy.Intersect_analysis([PWD_Parcels_Working] + [zoningCurrent], IntersectOutput, 'ALL')
         '''
         # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
         arcpy.AddField_management(IntersectOutput, 'Thinness', 'FLOAT')

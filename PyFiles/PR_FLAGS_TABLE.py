@@ -17,8 +17,9 @@ from sde_connections import DataBridge, GISLNI
 
 localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
 inMemory = 'in_memory'
-arcpy.env.overwriteOutput = True
+
 arcpy.env.workspace = localWorkspace
+arcpy.env.overwriteOutput = True
 editDB = GISLNI.sde_path
 edit = arcpy.da.Editor(editDB)
 print('''Starting script 'PermitReviewScripts.py'...''')
@@ -67,8 +68,8 @@ try:
     Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
 
     # Internal data sources
-    PWD_Parcels_Local = 'PWDParcels_' 
-    PWD_Spatial_Join = 'PWD_Spatial_Join'
+    PWD_Parcels_Raw = 'PWDParcels_Raw'
+    PWD_Parcels_Working = 'PWDParcels_Working'
     CornerProperties = 'Corner_Properties'
     PWD_PARCELS_SJ = 'PWD_PARCELS_Spatial_Join'
     CornerPropertiesSJ_P = 'CornerPropertiesSJ_P'
@@ -123,9 +124,9 @@ try:
         arcpy.Delete_management(Council_Districts_Local)
     arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_2016, localWorkspace, Council_Districts_Local)
     print('Updating PWD Parcels')
-    if arcpy.Exists(PWD_Parcels_Local):
-        arcpy.Delete_management(PWD_Parcels_Local)
-    arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Local)
+    if arcpy.Exists(PWD_Parcels_Raw):
+        arcpy.Delete_management(PWD_Parcels_Raw)
+    arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Raw)
     print('Updating PPR Assets')
     if arcpy.Exists(PPR_Assets_Local):
         arcpy.Delete_management(PPR_Assets_Local)
@@ -133,7 +134,7 @@ try:
 
     # Step 3B: Merge Parks with Parcels
     # Determine if parks have been added yet
-    tCursor = arcpy.da.SearchCursor(PWD_Parcels_Local, 'PARCELID')
+    tCursor = arcpy.da.SearchCursor(PWD_Parcels_Raw, 'PARCELID')
     print('Identifying Lowest Parcel ID')
     isNeg = min([int(row[0]) for row in tCursor])
     del tCursor
@@ -194,7 +195,7 @@ try:
         fm_Area.outputField = fm_Area_Out
         fms.addFieldMap(fm_ID)
         fms.addFieldMap(fm_Area)
-        arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Local, schema_type='NO_TEST', field_mapping=fms)
+        arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Raw, schema_type='NO_TEST', field_mapping=fms)
 
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
@@ -202,18 +203,18 @@ try:
     arcpy.FeatureClassToFeatureClass_conversion(DataBridge_Districts, localWorkspace, Districts)
     print('Spatial Joining Parcels and Districts')
     # Creates District Field in Parcel FC
-    arcpy.SpatialJoin_analysis(PWD_Parcels_Local, Districts, PWD_PARCELS_SJ)
+    arcpy.SpatialJoin_analysis(PWD_Parcels_Raw, Districts, PWD_PARCELS_SJ)
     print('Converting Corner Properties to Points')
     # Create 'corner' field in parcel FC when the parcel contains the corner polygon centroid
     arcpy.FeatureToPoint_management(CornerProperties, CornerPropertiesSJ_P, 'INSIDE')
     print('Creating Corner Field')
     arcpy.AddField_management(CornerPropertiesSJ_P, 'Corner', 'SHORT')
-    arcpy.CalculateField_management(CornerPropertiesSJ_P, 'Corner', '1', 'PYTHON_9.3')
+    arcpy.CalculateField_management(CornerPropertiesSJ_P, 'Corner', '1', 'PYTHON3')
     arcpy.Delete_management(CornerProperties)
-    arcpy.Delete_management(PWD_Parcels_Local)
+    arcpy.Delete_management(PWD_Parcels_Raw)
     arcpy.Delete_management(Districts)
     print('Spatial Joing Parcels and Corner Properties')
-    arcpy.SpatialJoin_analysis(PWD_PARCELS_SJ, CornerPropertiesSJ_P, PWD_Spatial_Join)
+    arcpy.SpatialJoin_analysis(PWD_PARCELS_SJ, CornerPropertiesSJ_P, PWD_Parcels_Working)
     arcpy.Delete_management(CornerPropertiesSJ_P)
     arcpy.Delete_management(PWD_PARCELS_SJ)
     print('SUCCESS at Step 3')
@@ -227,7 +228,7 @@ try:
     arcpy.FeatureClassToFeatureClass_conversion(GSI_SMP_TYPES, localWorkspace, PWD_GSI_SMP_TYPES)
 
     print('Adding Corner properties to dictionary')
-    cornerPropertyCursor = arcpy.da.SearchCursor(PWD_Spatial_Join,
+    cornerPropertyCursor = arcpy.da.SearchCursor(PWD_Parcels_Working,
                                                  ['PARCELID', 'ADDRESS', 'GROSS_AREA', 'DISTRICT', 'Corner'])
     parcelDict = {}
     for parcel in cornerPropertyCursor:
@@ -414,14 +415,14 @@ try:
         # arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_Local, inMemory, currentTract, "DISTRICT = '" + tract[0] + "'")
         arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract,
                                           "DISTRICT = '" + tract[0] + "'")
-        arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Spatial_Join, currentTract, tempParcels)
+        arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Working, currentTract, tempParcels)
         for r in reviewList:
             print('Beginning ' + r[0])
             inputs = tuple(r[:] + [localWorkspace, tempParcels, parcelDict])
             parcelFlag(*inputs)
 
     # Add remaining parcels to table
-    remainingCursor = arcpy.da.SearchCursor(PWD_Spatial_Join, ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
+    remainingCursor = arcpy.da.SearchCursor(PWD_Parcels_Working, ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
     print('Adding remaining parcels to dictionary')
     for row in remainingCursor:
         if row[0] not in parcelDict:
