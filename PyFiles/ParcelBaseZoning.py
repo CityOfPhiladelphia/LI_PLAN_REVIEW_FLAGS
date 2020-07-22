@@ -50,7 +50,7 @@ try:
     PR_FLAG_Temp = 'Flags_Table_Temp'
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
-    Park_IDs_Local = 'ParkNameIDs_' 
+    Park_IDs_Local = 'ParkNameIDs_'
     PWD_Parcels_Working = 'PWDParcels_Working'
     Council_Districts_Local = 'Districts_'
 
@@ -88,16 +88,14 @@ try:
 
         # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
         arcpy.AddField_management(IntersectOutput, 'Thinness', 'FLOAT')
-        print('Calculating Area')
+        # NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
         arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
-        """ #NOTE Thiness calculation was removed by request
-        print('Calculating Permimeter')
-        arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
-        print('Calculating Thiness')
-        arcpy.CalculateField_management(IntersectOutput, 'Thinness',
-                                        "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
         """
-
+        arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
+        arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
+                                        "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
+    
+        """
 
         inFL = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
                      'Thinness', 'CODE', 'ADDRESS']
@@ -111,7 +109,7 @@ try:
                 count += 1
                 if count in breaks:
                     print('Parsing Zoning FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-                if (row[2] / float(row[1])) > 0.01:  #To implment 3% coverage and thinness minimum: and row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
+                if (float(row[inFL.index('POLY_AREA')]) / float(row[inFL.index('GROSS_AREA')])) > 0.01:  #To implment 3% coverage and thinness minimum: and row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
                     if row[inFL.index('PARCELID')] in parcelDict:
                         tempList = parcelDict.get(row[inFL.index('PARCELID')])
                         tempCode = tempList[0]
@@ -162,6 +160,7 @@ try:
     arcpy.Append_management(remainingParcels, PR_FLAG_Temp, 'NO_TEST')
     arcpy.Delete_management(remainingParcels)
     log.info('PR Flags Part 2 Complete')
+
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]

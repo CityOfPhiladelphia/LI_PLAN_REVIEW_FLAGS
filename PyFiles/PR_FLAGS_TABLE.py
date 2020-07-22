@@ -5,6 +5,9 @@ This script copies all source data local produces the individual flag attributes
 Base Zoning, Overlay Zoning, and RCO information are populated by subsequent scripts in this package.
 These processes were moved to separate scripts due to CPU memory issues
 The final product is pushed back to databridge in CopyToEnterprise.py
+
+#TODO MAJOR: Rewrite entire process into 1 .py file.  New script should populate Base Zoning, Overlay Zoning, Floodplain, and PWD intially
+#TODO MAJOR: Second part of script should build boolean fields from initial populated fields rather than more intersect analysis
 """
 import datetime
 import logging
@@ -75,18 +78,18 @@ try:
     CornerPropertiesSJ_P = 'CornerPropertiesSJ_P'
     Districts = 'Districts'
     Hist_Sites_PhilReg = 'Hist_Sites_PhilReg'
-    Zon_Overlays = 'ZoningOverlays_' 
+    Zon_Overlays = 'ZoningOverlays_'
     Zoning_SteepSlope = 'PCPC_SteepSlope'
     PWD_GSI_SMP_TYPES = 'PWD_GSI_SMP_TYPES'
-    Zon_BaseDistricts = 'ZonBaseDistricts_' 
+    Zon_BaseDistricts = 'ZonBaseDistricts_'
     ArtCommission_BuildingIDSinageReview = 'ArtCommission_BuildingIDSinageReview'
     FloodPlain100Yr = 'PCPC_100YrFloodPlain'
     PCPC_Intersect = 'G:\\01_Dan_Interrante_Project_Folder\\ToolScratch.gdb\\PCPC_Intersect'
     PAC_Intersect = 'G:\\01_Dan_Interrante_Project_Folder\\ToolScratch.gdb\\PAC_Intersect'
     Flags_Table_Temp = 'Flags_Table_Temp'
-    Council_Districts_Local = 'Districts_' 
-    Park_IDs_Local = 'ParkNameIDs_' 
-    PPR_Assets_Local = 'PPRAssests_' 
+    Council_Districts_Local = 'Districts_'
+    Park_IDs_Local = 'ParkNameIDs_'
+    PPR_Assets_Local = 'PPRAssests_'
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
 
@@ -282,10 +285,9 @@ try:
             # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
             actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
             arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
-            arcpy.AddField_management(IntersectOutput, 'POLY_AREA',
-                                      'FLOAT')  # This is a dummy field to statisfy cursor, delete this line if thiness ratio is brought back.  The field indexes below are too hard coded to rearrange
-            """ #NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
+            #NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
+            """
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
             arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
                                             "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
@@ -303,8 +305,7 @@ try:
                 if count in breaks:
                     print('Parsing Intersect FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
                 # Only polygons with a thiness ratio of over 0.3 and a parcel coverage of more than 3% are included in analysis
-                if row[1] != '' and row[1] is not None and row[
-                    7] != '':  # and row[6] > 0.3 and (row[5] / float(row[4])) > 0.03 :
+                if row[1] != '' and row[1] is not None and row[7] != '' and (row[5] / float(row[4])) > 0.01: #0.03  # and row[6] >  0.3 :
                     # If parcel has not made it into dictionary, parcel gets a new entry added
                     if row[0] not in parcelDict and reviewType != zonB and reviewType != zonO:
                         tempDict = {'Address': row[1], 'PAC': [], 'PCPC': [], 'TempPCPC': [], 'PHC': [], 'PWD': [],
@@ -412,7 +413,6 @@ try:
         print('Processing Tract ' + tract[0] + "\n" + str(
             (float(districtCount) / float(districtTotal)) * 100.0) + '% Complete')
         print("DISTRICT = '" + tract[0] + "'")
-        # arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_Local, inMemory, currentTract, "DISTRICT = '" + tract[0] + "'")
         arcpy.MakeFeatureLayer_management(localWorkspace + '\\' + Council_Districts_Local, currentTract,
                                           "DISTRICT = '" + tract[0] + "'")
         arcpy.Clip_analysis(localWorkspace + '\\' + PWD_Parcels_Working, currentTract, tempParcels)
@@ -469,7 +469,6 @@ try:
              slope])
 
     log.info('PR Flags Part 1 complete')
-
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]

@@ -54,7 +54,7 @@ try:
     PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
-    Park_IDs_Local = 'ParkNameIDs_' 
+    Park_IDs_Local = 'ParkNameIDs_'
 
     localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
     inMemory = 'in_memory'
@@ -99,20 +99,18 @@ try:
         arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
         IntersectOutput = localWorkspace + '\\' + 'Int_' + zoningFC
         arcpy.Intersect_analysis([PWD_Parcels_Working] + [zoningCurrent], IntersectOutput, 'ALL')
-        '''
+
         # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
         arcpy.AddField_management(IntersectOutput, 'Thinness', 'FLOAT')
-        print('Calculating Area')
+        # NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
         arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
-        print('Calculating Permimeter')
+        """
         arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
-        print('Calculating Thiness')
-        arcpy.CalculateField_management(IntersectOutput, 'Thinness',
+        arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
                                         "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
-        fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
-                     'Thinness', 'CODE']
-        '''
-        fieldList = ['PARCELID', 'GROSS_AREA', 'ORGANIZATION_NAME']
+    
+        """
+        fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA', 'Thinness', 'ORGANIZATION_NAME', 'ADDRESS']
         IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
         countin = int(arcpy.GetCount_management(IntersectOutput).getOutput(0))
         count = 0
@@ -122,12 +120,12 @@ try:
             count += 1
             if count in breaks:
                 print('Parsing RCO FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-            # if (row[2] / float(row[1])) > 0.01:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
-            if row[fieldList.index('PARCELID')] in parcelDict:
-                tempList = parcelDict.get(row[0])
-                parcelDict[row[fieldList.index('PARCELID')]] = list(set([lookupDict[row[fieldList.index('ORGANIZATION_NAME')]]] + tempList))
-            else:
-                parcelDict[row[fieldList.index('PARCELID')]] = [lookupDict[row[fieldList.index('ORGANIZATION_NAME')]]]
+            if (float(row[fieldList.index('POLY_AREA')]) / float(row[fieldList.index('GROSS_AREA')])) > 0.01:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
+                if row[fieldList.index('PARCELID')] in parcelDict:
+                    tempList = parcelDict.get(row[0])
+                    parcelDict[row[fieldList.index('PARCELID')]] = list(set([lookupDict[row[fieldList.index('ORGANIZATION_NAME')]]] + tempList))
+                else:
+                    parcelDict[row[fieldList.index('PARCELID')]] = [lookupDict[row[fieldList.index('ORGANIZATION_NAME')]]]
         arcpy.Delete_management(IntersectOutput)
         arcpy.Delete_management(zoningCurrent)
         arcpy.SelectLayerByAttribute_management(zoningLayer, 'CLEAR_SELECTION')

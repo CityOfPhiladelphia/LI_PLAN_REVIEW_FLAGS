@@ -31,7 +31,6 @@ except:
     sys.exit(1)
 
 try:
-
     log.info('Truncating GISLNI')
     arcpy.TruncateTable_management(GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY')
     log.info('Appending to GISLNI')
@@ -43,7 +42,6 @@ try:
     log.info('Appending to DataBridge')
     arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
     log.info('DataBridge Table Updated')
-
 except:
     msgs = arcpy.GetMessages(2)
     print(msgs)

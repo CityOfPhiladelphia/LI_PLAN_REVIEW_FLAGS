@@ -51,7 +51,7 @@ try:
     PR_FLAG_Temp = 'Flags_Table_Temp'
     PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
     PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
-    Park_IDs_Local = 'ParkNameIDs_' 
+    Park_IDs_Local = 'ParkNameIDs_'
     PWD_Parcels_Working = 'PWDParcels_Working'
 
     localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
@@ -106,20 +106,18 @@ try:
                 IntersectOutput = localWorkspace + '\\' + zoningFC + '_Int'
                 print('Running Intersect')
                 arcpy.Intersect_analysis([tempParcels] + [tempZone], IntersectOutput, 'ALL')
-                '''
+
                 # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
                 arcpy.AddField_management(IntersectOutput, 'Thinness', 'FLOAT')
-                print('Calculating Area')
+                # NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
                 arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
-                print('Calculating Permimeter')
+                """
                 arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
-                print('Calculating Thiness')
-                arcpy.CalculateField_management(IntersectOutput, 'Thinness',
+                arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
                                                 "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
-                fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
-                             'Thinness', 'CODE']
-                '''
-                fieldList = ['PARCELID', 'GROSS_AREA', 'OVERLAY_NAME']
+    
+                """
+                fieldList = ['PARCELID', 'GROSS_AREA', 'POLY_AREA', 'Thinness', 'OVERLAY_NAME', 'ADDRESS']
                 IntersectCursor = arcpy.da.SearchCursor(IntersectOutput, fieldList)
                 countin = int(arcpy.GetCount_management(IntersectOutput).getOutput(0))
                 count = 0
@@ -129,12 +127,14 @@ try:
                     count += 1
                     if count in breaks:
                         print('Parsing Zoning FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-                    #if (row[2] / float(row[1])) > 0.01:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
-                    if row[fieldList.index('PARCELID')] in parcelDict:
-                        tempList = parcelDict.get(row[0])
-                        parcelDict[row[fieldList.index('PARCELID')]] = list(set([row[fieldList.index('OVERLAY_NAME')]] + tempList))
-                    else:
-                        parcelDict[row[fieldList.index('PARCELID')]] = [row[fieldList.index('OVERLAY_NAME')]]
+                    if (float(row[fieldList.index('POLY_AREA')]) / float(row[fieldList.index('GROSS_AREA')])) > 0.01:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
+                        if row[fieldList.index('PARCELID')] in parcelDict and row[fieldList.index('PARCELID')] is not None:
+                            print('should not be here 2')
+                            tempList = parcelDict[row[fieldList.index('PARCELID')]]
+                            parcelDict[row[fieldList.index('PARCELID')]] = list(set([row[fieldList.index('OVERLAY_NAME')]] + tempList))
+                        else:
+                            print('Should not be here 1.5')
+                            parcelDict[row[fieldList.index('PARCELID')]] = [row[fieldList.index('OVERLAY_NAME')]]
                 arcpy.Delete_management(IntersectOutput)
                 arcpy.Delete_management(currentTract)
                 arcpy.Delete_management(tempZone)
@@ -154,7 +154,6 @@ try:
             zoneCursor.updateRow(parcel)
     del zoneCursor
     log.info('PR Flags Part 3 Complete')
-
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
