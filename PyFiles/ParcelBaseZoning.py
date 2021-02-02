@@ -125,7 +125,7 @@ try:
         arcpy.Delete_management(tempParcels)
     del districtTileCursor
 
-    # Add base zoning for existing parking
+    # Add base zoning back to existing dor parcel
     countin = int(arcpy.GetCount_management(PR_FLAG_Temp).getOutput(0))
     count = 0
     print('Found ' + str(countin) + ' records in local flags table')

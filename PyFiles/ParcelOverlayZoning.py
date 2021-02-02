@@ -127,7 +127,8 @@ try:
                     count += 1
                     if count in breaks:
                         print('Parsing Zoning FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
-                    if (float(row[fieldList.index('POLY_AREA')]) / float(row[fieldList.index('GROSS_AREA')])) > 0.01:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
+                    # make sure to change this back to 0.01 for 1% inclusion
+                    if (float(row[fieldList.index('POLY_AREA')]) / float(row[fieldList.index('GROSS_AREA')])) > 0.10:  #To implment 3% coverage and thinness minimum: row[3] > 0.3 and (row[2] / float(row[1])) > 0.03:
                         if row[fieldList.index('PARCELID')] in parcelDict and row[fieldList.index('PARCELID')] is not None:
                             print('should not be here 2')
                             tempList = parcelDict[row[fieldList.index('PARCELID')]]
@@ -135,6 +136,7 @@ try:
                         else:
                             print('Should not be here 1.5')
                             parcelDict[row[fieldList.index('PARCELID')]] = [row[fieldList.index('OVERLAY_NAME')]]
+
                 arcpy.Delete_management(IntersectOutput)
                 arcpy.Delete_management(currentTract)
                 arcpy.Delete_management(tempZone)

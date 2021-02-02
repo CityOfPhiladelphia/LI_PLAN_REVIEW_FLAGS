@@ -1,5 +1,6 @@
+def matchCentroid(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinness, zoning, address, parcelDict, zoningFC, z):
 
-def matchZone(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinness, zoning, address, parcelDict, zoningFC, z):
+def matchGeom(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinness, zoning, address, parcelDict, zoningFC, z):
     print(datetime.datetime.now())
     parcelCrash = ''
     currentTract = 'CurrentDistrict'
@@ -10,7 +11,7 @@ def matchZone(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinne
     arcpy.CalculateField_management(Council_Districts_Local, 'DISTRICT', '!DISTRICT!.strip(' ')', 'PYTHON_9.3')
 
     #Run Intersect Between Parcels and Zoning Layer
-    IntersectOutput = localWorkspace + '\\' + z[0] + '_Int'
+    IntersectOutput = localWorkspace + '\\' + z[0].replace(' ','_') + '_Int'
     print('Running Intersect')
     arcpy.Intersect_analysis([localWorkspace + '\\' + parcel_outline] + [zoningFC], IntersectOutput, 'ALL')
 
@@ -366,13 +367,13 @@ edit = arcpy.da.Editor(editDB)
 log.info('Beginning PR Flags')
 #try:
 # External data sources
-PWD_PARCELS_DataBridge = DataBridge.sde_path + '\\GIS_WATER.pwd_parcels' #TODO Uncomment for Prod
-#PWD_PARCELS_DataBridge = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\PWD_DIST_4_INPUT'#TODO Temp
+#PWD_PARCELS_DataBridge = DataBridge.sde_path + '\\GIS_WATER.pwd_parcels' #TODO Uncomment for Prod
+PWD_PARCELS_DataBridge = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\PWD_Input_Main_St'#TODO Temp
 PWD_PARCELS_PINNED_DataBridge = DataBridge.sde_path + '\\GIS_WATER.pwd_parcels_pinned'
-Zoning_BaseDistricts = DataBridge.sde_path + '\\GIS_PLANNING.Zoning_BaseDistricts'
+Zoning_BaseDistricts = DataBridge.sde_path + '\\GIS_PLANNING.Zoning_BaseDistricts' # Based off DOR Parcels
 FEMA_100_flood_Plain = DataBridge.sde_path + '\\GIS_PLANNING.FEMA_100_flood_Plain'
-Historic_Sites_PhilReg = DataBridge.sde_path + '\\GIS_PLANNING.Historic_Sites_PhilReg'
-Zoning_Overlays = DataBridge.sde_path + '\\GIS_PLANNING.Zoning_Overlays'
+Historic_Sites_PhilReg = DataBridge.sde_path + '\\GIS_PLANNING.Historic_Sites_PhilReg' # Based off PWD Parcels
+Zoning_Overlays = DataBridge.sde_path + '\\GIS_PLANNING.Zoning_Overlays' # Based off DOR Parcels
 Zoning_SteepSlopeProtectArea_r = DataBridge.sde_path + '\\GIS_PLANNING.Zoning_SteepSlopeProtectArea_r'
 GSI_SMP_TYPES = DataBridge.sde_path + '\\GIS_WATER.GSI_SMP_TYPES'
 GISLNI_Corner_Properties = GISLNI.sde_path + '\\GIS_LNI.PR_CORNER_PROPERTIES'
@@ -381,8 +382,8 @@ Council_Districts_2016 = DataBridge.sde_path + '\\GIS_PLANNING.Council_Districts
 PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
 Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
 Zoning_RCOs = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_RCO'
-DOR_PARCELS_DataBridge = DataBridge.sde_path + '\\GIS_DOR.dor_parcel' # TODO Uncomment for Prod
-#DOR_PARCELS_DataBridge = 'DOR_DIST_4_INPUT'# TODO TEMP
+#DOR_PARCELS_DataBridge = DataBridge.sde_path + '\\GIS_DOR.dor_parcel' # TODO Uncomment for Prod
+DOR_PARCELS_DataBridge = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\DOR_Input_Main_St'# TODO TEMP
 
 # Internal data sources
 PWD_Parcels_Raw = 'PWDParcels_Raw'
@@ -393,7 +394,7 @@ CornerProperties = 'Corner_Properties'
 PWD_PARCELS_SJ = 'PWD_PARCELS_Spatial_Join'
 CornerPropertiesSJ_P = 'CornerPropertiesSJ_P'
 Districts = 'Districts'
-Hist_Sites_PhilReg = 'Hist_Sites_PhilReg'
+Hist_Sites_PhilReg = 'Hist_Sites_PhilReg' #We only look at properties on the local register--
 Zon_Overlays = 'ZoningOverlays_'
 Zoning_SteepSlope = 'PCPC_SteepSlope'
 PWD_GSI_SMP_TYPES = 'PWD_GSI_SMP_TYPES'
@@ -438,6 +439,7 @@ GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path + '\\GIS_LNI.PR_PHC'
 PR_FLAG_SUMMARY = GISLNI.sde_path + '\\GIS_LNI.LI_PR_FLAG_SUMMARY'
 print('SUCCESS at Step 2')
 
+"""
 # Step 3A: Update Local Copies of DataBridge Files
 print('Updating Zoning Base Districts')
 if arcpy.Exists(Zon_BaseDistricts):
@@ -477,7 +479,7 @@ arcpy.FeatureClassToFeatureClass_conversion(Zoning_RCOs, localWorkspace,Zon_RCOs
 if arcpy.Exists(Hist_Sites_PhilReg):
     arcpy.Delete_management(Hist_Sites_PhilReg)
 arcpy.FeatureClassToFeatureClass_conversion(Historic_Sites_PhilReg, localWorkspace, Hist_Sites_PhilReg)
-
+"""
 
 # Create Local Working Table
 arcpy.CreateTable_management(localWorkspace, Flags_Table_Temp, PR_FLAG_SUMMARY)
@@ -492,11 +494,11 @@ DOR_Base_Fields = ['MAPREG', 'PARCEL_AREA', 'POLY_AREA',
         'Thinness', 'CODE', 'ADDR_STD']
 print('Beginning DOR Spatial Association')
 dorDict = {}
-dorDict = matchZone(DOR_Parcels_Local, DOR_Base_Fields, DOR_Base_Fields.index('MAPREG'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_Base_Fields, DOR_Base_Fields.index('MAPREG'),
                     DOR_Base_Fields.index('PARCEL_AREA'), DOR_Base_Fields.index('POLY_AREA'),
                     DOR_Base_Fields.index('Thinness'), ['CODE'], DOR_Base_Fields.index('ADDR_STD'),
                     dorDict, Zon_BaseDistricts, ['Base_Zone'])
-"""
+""" #TODO DELETE
 # Run DOR Parcels through Zoning Overlays
 zoningLayer = 'zoningLayer'
 specOverlayCursor = arcpy.da.SearchCursor(Zon_Overlays, 'OVERLAY_NAME')
@@ -523,13 +525,13 @@ for overlayType in overlayTypes:
     arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OVERLAY_NAME = '" + overlayType.replace("'", '"') + "'")
     zoningCurrent = overlayType.lstrip('/') + '_layer'
     arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
-    dorDict = matchZone(DOR_Parcels_Local, DOR_Overlay_fields, DOR_Overlay_fields.index('MAPREG'), DOR_Overlay_fields.index('PARCEL_AREA'),
+    dorDict = matchGeom(DOR_Parcels_Local, DOR_Overlay_fields, DOR_Overlay_fields.index('MAPREG'), DOR_Overlay_fields.index('PARCEL_AREA'),
                        DOR_Overlay_fields.index('POLY_AREA'), DOR_Overlay_fields.index('Thinness'), ['OVERLAY_NAME'],
                        DOR_Overlay_fields.index('ADDR_STD'), dorDict, zoningCurrent, ['Overlay_Zone'])
 """
 DOR_Overlay_fields = DOR_Base_Fields
 DOR_Overlay_fields[DOR_Overlay_fields.index('CODE')] = 'OVERLAY_NAME'
-dorDict = matchZone(DOR_Parcels_Local, DOR_Overlay_fields, DOR_Overlay_fields.index('MAPREG'), DOR_Overlay_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_Overlay_fields, DOR_Overlay_fields.index('MAPREG'), DOR_Overlay_fields.index('PARCEL_AREA'),
                    DOR_Overlay_fields.index('POLY_AREA'), DOR_Overlay_fields.index('Thinness'), ['OVERLAY_NAME'],
                    DOR_Overlay_fields.index('ADDR_STD'), dorDict, Zon_Overlays, ['Overlay_Zone'])
 
@@ -538,7 +540,7 @@ dorDict = matchZone(DOR_Parcels_Local, DOR_Overlay_fields, DOR_Overlay_fields.in
 print('Applying Zoning RCO to DOR')
 DOR_RCO_fields = DOR_Overlay_fields
 DOR_RCO_fields[4] = 'LNI_ID'
-dorDict = matchZone(DOR_Parcels_Local, DOR_RCO_fields, DOR_RCO_fields.index('MAPREG'), DOR_RCO_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_RCO_fields, DOR_RCO_fields.index('MAPREG'), DOR_RCO_fields.index('PARCEL_AREA'),
                        DOR_RCO_fields.index('POLY_AREA'), DOR_RCO_fields.index('Thinness'), ['LNI_ID'],
                        DOR_RCO_fields.index('ADDR_STD'), dorDict, Zon_RCOs, ['ZONING_RCO'])
 
@@ -548,14 +550,14 @@ arcpy.AddField_management(PWD_GSI_SMP_TYPES, 'PWD', 'TEXT', field_length='3')
 DOR_PWD_fields = DOR_Overlay_fields
 DOR_PWD_fields[4] = 'PWD'
 arcpy.MakeFeatureLayer_management(PWD_GSI_SMP_TYPES, PWD_Green_Roof, "SUBTYPE IN( 10 )")
-dorDict = matchZone(DOR_Parcels_Local, DOR_PWD_fields, DOR_PWD_fields.index('MAPREG'), DOR_PWD_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_PWD_fields, DOR_PWD_fields.index('MAPREG'), DOR_PWD_fields.index('PARCEL_AREA'),
                        DOR_PWD_fields.index('POLY_AREA'), DOR_PWD_fields.index('Thinness'), None,
                        DOR_PWD_fields.index('ADDR_STD'), dorDict, PWD_Green_Roof, ['GREEN ROOF'])
 
 # PWD SMP Type Buffer
 print('Applying PWD Buffer to DOR')
 arcpy.Buffer_analysis(PWD_GSI_SMP_TYPES, PWD_GSI_SMP_Buffer, '50 Feet')
-dorDict = matchZone(DOR_Parcels_Local, DOR_PWD_fields, DOR_PWD_fields.index('MAPREG'), DOR_PWD_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_PWD_fields, DOR_PWD_fields.index('MAPREG'), DOR_PWD_fields.index('PARCEL_AREA'),
                        DOR_PWD_fields.index('POLY_AREA'), DOR_PWD_fields.index('Thinness'), None,
                        DOR_PWD_fields.index('ADDR_STD'), dorDict, PWD_GSI_SMP_Buffer, ['Green Infrastructure'])
 
@@ -564,7 +566,7 @@ print('Applying Floodplain to DOR')
 arcpy.AddField_management(Floodplain, 'Floodplain', 'TEXT', field_length='3')
 DOR_Flood_fields = DOR_PWD_fields
 DOR_Flood_fields[4] = 'Floodplain'
-dorDict = matchZone(DOR_Parcels_Local, DOR_Flood_fields, DOR_Flood_fields.index('MAPREG'), DOR_Flood_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_Flood_fields, DOR_Flood_fields.index('MAPREG'), DOR_Flood_fields.index('PARCEL_AREA'),
                        DOR_Flood_fields.index('POLY_AREA'), DOR_Flood_fields.index('Thinness'), None,
                        DOR_Flood_fields.index('ADDR_STD'), dorDict, Floodplain, ['Floodplain'])
 # Steep Slope
@@ -572,7 +574,7 @@ print('Applying Steep Slope to DOR')
 arcpy.AddField_management(Zoning_SteepSlope, 'Steep_Slope', 'TEXT', field_length='3')
 DOR_Slope_fields = DOR_Flood_fields
 DOR_Slope_fields[4] = 'Steep_Slope'
-dorDict = matchZone(DOR_Parcels_Local, DOR_Slope_fields, DOR_Slope_fields.index('MAPREG'), DOR_Slope_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_Slope_fields, DOR_Slope_fields.index('MAPREG'), DOR_Slope_fields.index('PARCEL_AREA'),
                        DOR_Slope_fields.index('POLY_AREA'), DOR_Slope_fields.index('Thinness'), None,
                        DOR_Slope_fields.index('ADDR_STD'), dorDict, Zoning_SteepSlope, ['Steep_Slope'])
 
@@ -581,12 +583,11 @@ print('Applying Historic Areas')
 arcpy.AddField_management(Hist_Sites_PhilReg, 'Historic', 'TEXT', field_length='3')
 DOR_Historic_fields = DOR_Slope_fields
 DOR_Historic_fields[4] = 'Historic'
-dorDict = matchZone(DOR_Parcels_Local, DOR_Historic_fields, DOR_Historic_fields.index('MAPREG'), DOR_Historic_fields.index('PARCEL_AREA'),
+dorDict = matchGeom(DOR_Parcels_Local, DOR_Historic_fields, DOR_Historic_fields.index('MAPREG'), DOR_Historic_fields.index('PARCEL_AREA'),
                        DOR_Historic_fields.index('POLY_AREA'), DOR_Historic_fields.index('Thinness'), None,
                        DOR_Historic_fields.index('ADDR_STD'), dorDict, Hist_Sites_PhilReg, ['Historic'])
 
 # Add Values to Local DOR GIS
-pinDict = {}
 arcpy.management.AddFields(DOR_Parcels_Local, [['BASE_ZONING', 'TEXT','', '1999'],
                                                ['OVERLAY_ZONING', 'TEXT','', '1999'], ['ZONING_RCO', 'TEXT','', '1999'],
                                                ['PWD_REVIEW_TYPE', 'TEXT','', '1999'], ['FLOODPLAIN', 'SHORT'],
@@ -594,6 +595,7 @@ arcpy.management.AddFields(DOR_Parcels_Local, [['BASE_ZONING', 'TEXT','', '1999'
 arcpy.CalculateField_management(DOR_Parcels_Local, 'ADDRESS', '!ADDR_STD!', 'PYTHON3')
 cursorFieldList = ['MAPREG', 'BASE_ZONING', 'OVERLAY_ZONING', 'ZONING_RCO', 'PWD_REVIEW_TYPE', 'FLOODPLAIN', 'STEEP_SLOPE', 'HISTORIC', 'ADDRESS','PIN', 'COMPLETED']
 dorUpdateCursor = arcpy.da.UpdateCursor(DOR_Parcels_Local, cursorFieldList)
+pinDict = {}
 countin = int(arcpy.GetCount_management(DOR_Parcels_Local).getOutput(0))
 count = 0
 print('Found ' + str(countin) + ' records in input table')
@@ -725,6 +727,7 @@ print('Adding PINS to Parcels')
 arcpy.JoinField_management(PWD_Parcels_Working, 'PARCELID', PWD_Parcels_PINED, 'PARCELID', ['PIN'])
 print('Completed PWD Parcel Preparation')
 
+# Add Flood, Steep Slope, and PWD Info to All PWD Parcels
 
 pwdPINFields = ['PARCELID', 'ADDRESS', 'PIN', 'GROSS_AREA', 'Corner', 'DISTRICT']
 pwdPINcursor = arcpy.da.SearchCursor(PWD_Parcels_Working, pwdPINFields)
@@ -760,7 +763,7 @@ for row in completeDOR1:
     else:
 
         addressDict[row[cursorFieldList.index('ADDRESS')]] = {f:row[cursorFieldList.index(f)] for f in cursorFieldList}
-    completeDOR1.updateRow(row)
+    completeDOR1.updateRow(row) #TODO Uncomment for prod
 del completeDOR1
 
 # Match Parcels Via Address
@@ -774,7 +777,7 @@ for k,v in addressDict.items():
     if k in pwdAddressDict:
         review = ReviewType(v)
         insertList = parsedZoning(review, k, v, pwdAddressDict, pwdAddressFields)
-        pwdAddressInsertCursor.insertRow(insertList)
+        #pwdAddressInsertCursor.insertRow(insertList) #TODO Uncomment for prod
         completedList.append(k)
 del pwdAddressInsertCursor
 
@@ -795,7 +798,7 @@ arcpy.FeatureClassToFeatureClass_conversion(DOR_Parcels_Local, localWorkspace, D
 spatialDict = {}
 copyList = ['BASE_ZONING', 'OVERLAY_ZONING', 'ZONING_RCO', 'PWD_REVIEW_TYPE', 'FLOODPLAIN', 'STEEP_SLOPE', 'HISTORIC']
 PWD_Field_List = ['PARCELID', 'GROSS_AREA', 'POLY_AREA', 'Thinness', 'ADDRESS']+copyList
-spatialDict = matchZone(PWD_Parcels_Working, PWD_Field_List, PWD_Field_List.index('PARCELID'), PWD_Field_List.index('GROSS_AREA'), PWD_Field_List.index('POLY_AREA'), PWD_Field_List.index('Thinness'), copyList, PWD_Field_List.index('ADDRESS'), spatialDict, DOR_For_Spatial, copyList)
+spatialDict = matchGeom(PWD_Parcels_Working, PWD_Field_List, PWD_Field_List.index('PARCELID'), PWD_Field_List.index('GROSS_AREA'), PWD_Field_List.index('POLY_AREA'), PWD_Field_List.index('Thinness'), copyList, PWD_Field_List.index('ADDRESS'), spatialDict, DOR_For_Spatial, copyList)
 
 # Insert Spatial Dict into Flags Table
 dorSpatialInsertCursor = arcpy.da.InsertCursor(Flags_Table_Temp, flagFields)
@@ -830,7 +833,7 @@ PWD_Base_Fields = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
         'Thinness', 'CODE', 'ADDRESS']
 print('Beginning PWD Spatial Association')
 pwdDict = {}
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Base_Fields, PWD_Base_Fields.index('PARCELID'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_Base_Fields, PWD_Base_Fields.index('PARCELID'),
                     PWD_Base_Fields.index('GROSS_AREA'), PWD_Base_Fields.index('POLY_AREA'),
                     PWD_Base_Fields.index('Thinness'), ['CODE'], PWD_Base_Fields.index('ADDRESS'),
                     pwdDict, Zon_BaseDistricts, ['Base_Zone'])
@@ -859,7 +862,7 @@ for overlayType in overlayTypes:
     arcpy.SelectLayerByAttribute_management(zoningLayer, 'NEW_SELECTION', "OVERLAY_NAME = '" + overlayType.replace("'", '"') + "'")
     zoningCurrent = overlayType.lstrip('/') + '_layer'
     arcpy.MakeFeatureLayer_management(zoningLayer, zoningCurrent)
-    pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Overlay_fields, PWD_Overlay_fields.index('PARCELID'),
+    pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_Overlay_fields, PWD_Overlay_fields.index('PARCELID'),
                         PWD_Overlay_fields.index('GROSS_AREA'),PWD_Overlay_fields.index('POLY_AREA'),
                         PWD_Overlay_fields.index('Thinness'), ['OVERLAY_NAME'],
                         PWD_Overlay_fields.index('ADDRESS'), pwdDict, zoningCurrent, ['Overlay_Zone'])
@@ -868,7 +871,7 @@ for overlayType in overlayTypes:
 print('Applying Zoning RCO to PWD')
 PWD_RCO_fields = PWD_Overlay_fields
 PWD_RCO_fields[4] = 'LNI_ID'
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_RCO_fields, PWD_RCO_fields.index('PARCELID'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_RCO_fields, PWD_RCO_fields.index('PARCELID'),
                         PWD_RCO_fields.index('GROSS_AREA'),PWD_RCO_fields.index('POLY_AREA'),
                         PWD_RCO_fields.index('Thinness'), ['LNI_ID'],
                         PWD_RCO_fields.index('ADDRESS'), pwdDict, Zon_RCOs, ['ZONING_RCO'])
@@ -878,13 +881,13 @@ print('Applying Green Roof to PWD Parcels')
 PWD_PWD_fields = PWD_Overlay_fields
 PWD_PWD_fields[4] = 'PWD'
 arcpy.MakeFeatureLayer_management(PWD_GSI_SMP_TYPES, PWD_Green_Roof, "SUBTYPE IN( 10 )")
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_PWD_fields, PWD_PWD_fields.index('PARCELID'), PWD_PWD_fields.index('GROSS_AREA'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_PWD_fields, PWD_PWD_fields.index('PARCELID'), PWD_PWD_fields.index('GROSS_AREA'),
                        PWD_PWD_fields.index('POLY_AREA'), PWD_PWD_fields.index('Thinness'), None,
                        PWD_PWD_fields.index('ADDRESS'), pwdDict, PWD_Green_Roof, ['GREEN ROOF'])
 
 # PWD SMP Type Buffer
 print('Applying PWD Buffer to PWD Parcels')
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_PWD_fields, PWD_PWD_fields.index('PARCELID'), PWD_PWD_fields.index('GROSS_AREA'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_PWD_fields, PWD_PWD_fields.index('PARCELID'), PWD_PWD_fields.index('GROSS_AREA'),
                        PWD_PWD_fields.index('POLY_AREA'), PWD_PWD_fields.index('Thinness'), None,
                        PWD_PWD_fields.index('ADDRESS'), pwdDict, PWD_GSI_SMP_Buffer, ['Green Infrastructure'])
 
@@ -893,7 +896,7 @@ print('Applying Floodplain to DOR')
 arcpy.AddField_management(Floodplain, 'Floodplain', 'TEXT', field_length='3')
 PWD_Flood_fields = PWD_PWD_fields
 PWD_Flood_fields[4] = 'Floodplain'
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Flood_fields, PWD_Flood_fields.index('PARCELID'), PWD_Flood_fields.index('GROSS_AREA'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_Flood_fields, PWD_Flood_fields.index('PARCELID'), PWD_Flood_fields.index('GROSS_AREA'),
                        PWD_Flood_fields.index('POLY_AREA'), PWD_Flood_fields.index('Thinness'), None,
                        PWD_Flood_fields.index('ADDRESS'), pwdDict, Floodplain, ['Floodplain'])
 
@@ -901,7 +904,7 @@ pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Flood_fields, PWD_Flood_fields.in
 print('Applying Steep Slope to PWD Parcels')
 PWD_Slope_fields = PWD_Flood_fields
 PWD_Slope_fields[4] = 'Steep_Slope'
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Slope_fields, PWD_Slope_fields.index('PARCELID'), PWD_Slope_fields.index('GROSS_AREA'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_Slope_fields, PWD_Slope_fields.index('PARCELID'), PWD_Slope_fields.index('GROSS_AREA'),
                        PWD_Slope_fields.index('POLY_AREA'), PWD_Slope_fields.index('Thinness'), None,
                        PWD_Slope_fields.index('ADDRESS'), pwdDict, Zoning_SteepSlope, ['Steep_Slope'])
 
@@ -909,7 +912,7 @@ pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Slope_fields, PWD_Slope_fields.in
 print('Applying Historic Areas')
 PWD_Historic_fields = PWD_Slope_fields
 PWD_Historic_fields[4] = 'Historic'
-pwdDict = matchZone(PWD_Parcels_Remaining, PWD_Historic_fields, PWD_Historic_fields.index('PARCELID'), PWD_Historic_fields.index('GROSS_AREA'),
+pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_Historic_fields, PWD_Historic_fields.index('PARCELID'), PWD_Historic_fields.index('GROSS_AREA'),
                        PWD_Historic_fields.index('POLY_AREA'), PWD_Historic_fields.index('Thinness'), None,
                        PWD_Historic_fields.index('ADDRESS'), pwdDict, Hist_Sites_PhilReg, ['Historic'])
 
@@ -944,10 +947,10 @@ for k, v in pwdDict.items():
 del pwdDirectInsertCursor
 
 # Consolidate duplicate parcel ids
-#TODO Truncate append Flags Clean
 arcpy.TruncateTable_management(Flags_Table_Clean)
 finalFields = [f.name for f in arcpy.ListFields(Flags_Table_Temp) if f.name != 'OBJECTID']
-fOutCursor = arcpy.da.SearchCursor(Flags_Table_Temp, finalFields) #TODO Temp where clause for testing
+fOutCursor = arcpy.da.SearchCursor(Flags_Table_Temp, finalFields) #TODO Uncomment for prod
+#fOutCursor = arcpy.da.SearchCursor(Flags_Table_Temp, finalFields, where_clause = "PWD_PARCEL_ID = 38804")
 #fOutDict = {row[finalFields.index('PWD_PARCEL_ID')]:{f:row[finalFields.index(f)] for f in finalFields} for row in fOutCursor}
 fInDict = {}
 boolOutList = ['PAC_FLAG', 'PCPC_FLAG', 'PHC_FLAG', 'PWD_FLAG', 'FLOODPLAIN', 'STEEP_SLOPE']
@@ -988,6 +991,7 @@ for v in fInDict.values():
     inList = [None] * len(finalFields)
     for i, f in enumerate(finalFields):
         inList[i] = v[f] if v[f] != '' else None
+    #print(inList)
     fInCursor.insertRow(inList)
 log.info('PR Flags Complete')
 endTime = datetime.datetime.now()

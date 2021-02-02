@@ -69,6 +69,8 @@ try:
     Council_Districts_2016 = DataBridge.sde_path + '\\GIS_PLANNING.Council_Districts_2016'
     PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
     Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
+    DOR_PARCELS_DataBridge = DataBridge.sde_path + '\\GIS_DOR.dor_parcel'
+
 
     # Internal data sources
     PWD_Parcels_Raw = 'PWDParcels_Raw'
@@ -199,6 +201,8 @@ try:
         fms.addFieldMap(fm_ID)
         fms.addFieldMap(fm_Area)
         arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Raw, schema_type='NO_TEST', field_mapping=fms)
+
+
 
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
