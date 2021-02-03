@@ -228,7 +228,7 @@ try:
 
     print('Copying Overlays local')
     arcpy.FeatureClassToFeatureClass_conversion(Zoning_SteepSlopeProtectArea_r, localWorkspace, Zoning_SteepSlope)
-    arcpy.FeatureClassToFeatureClass_conversion(GSI_SMP_TYPES, localWorkspace, PWD_GSI_SMP_TYPES)
+    arcpy.FeatureClassToFeatureClass_conversion(GSI_SMP_TYPES, localWorkspace, PWD_GSI_SMP_TYPES, where_clause="OWNER IN ('PPRPWDMAINT', 'PRIVPWDMAINT', 'PWD')")
 
     print('Adding Corner properties to dictionary')
     cornerPropertyCursor = arcpy.da.SearchCursor(PWD_Parcels_Working,
