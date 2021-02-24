@@ -1,4 +1,8 @@
-def matchCentroid(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinness, zoning, address, parcelDict, zoningFC, z):
+#def matchCentroid(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinness, zoning, address, parcelDict, zoningFC, z):
+
+#TODO Match Base and Overlay Zoning: DOR takes priortiy over PWD
+#TODO Match Flood and Slope: Test for true in BOTH PWD and DOR
+#TODO HISTORIC based on centroid
 
 def matchGeom(parcel_outline, fields, parcel_id, orig_area, overlap_area, thinness, zoning, address, parcelDict, zoningFC, z):
     print(datetime.datetime.now())
