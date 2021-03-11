@@ -731,8 +731,17 @@ print('Adding PINS to Parcels')
 arcpy.JoinField_management(PWD_Parcels_Working, 'PARCELID', PWD_Parcels_PINED, 'PARCELID', ['PIN'])
 print('Completed PWD Parcel Preparation')
 
-# Add Flood, Steep Slope, and PWD Info to All PWD Parcels
+#TODO Add Flood, Steep Slope, and PWD Info to All PWD Parcels
+#What Am I doing here?  I'm going to caputre these for ALL PWD so DOR results will have to simply be added to this
+PWD_Flood_Fields = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
+        'Thinness', 'CODE', 'ADDRESS']
+print('Beginning PWD Spatial Association')
+pwdDict = {}
 
+
+#TODO Add Historic to all PWD via Centrioid
+
+# Create PIN Lookup Dict
 pwdPINFields = ['PARCELID', 'ADDRESS', 'PIN', 'GROSS_AREA', 'Corner', 'DISTRICT']
 pwdPINcursor = arcpy.da.SearchCursor(PWD_Parcels_Working, pwdPINFields)
 pwdPINLookupDict = {row[pwdPINFields.index('PIN')]:row[:] for row in pwdPINcursor}
@@ -833,10 +842,12 @@ print('Applying Base Zoning to PWD Remain')
 #print('Calculating Parcel Size')
 #arcpy.AddField_management(DOR_Parcels_Local, 'PARCEL_AREA', 'FLOAT') #TODO Temp
 #arcpy.CalculateGeometryAttributes_management(DOR_Parcels_Local, [['PARCEL_AREA', 'AREA']], area_unit='SQUARE_FEET_US') #TODO Temp
+"""
 PWD_Base_Fields = ['PARCELID', 'GROSS_AREA', 'POLY_AREA',
         'Thinness', 'CODE', 'ADDRESS']
 print('Beginning PWD Spatial Association')
 pwdDict = {}
+""" #TODO Delete this comment
 pwdDict = matchGeom(PWD_Parcels_Remaining, PWD_Base_Fields, PWD_Base_Fields.index('PARCELID'),
                     PWD_Base_Fields.index('GROSS_AREA'), PWD_Base_Fields.index('POLY_AREA'),
                     PWD_Base_Fields.index('Thinness'), ['CODE'], PWD_Base_Fields.index('ADDRESS'),
