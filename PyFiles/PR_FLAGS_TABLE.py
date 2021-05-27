@@ -6,6 +6,8 @@ Base Zoning, Overlay Zoning, and RCO information are populated by subsequent scr
 These processes were moved to separate scripts due to CPU memory issues
 The final product is pushed back to databridge in CopyToEnterprise.py
 
+#TODO TEMP-This process is currently not incorporating new park parcel data, but using a copy from May 8, 2021.  Process need to be rebuilt with new PPR_PROPERTIES dataset
+
 #TODO MAJOR: Rewrite entire process into 1 .py file.  New script should populate Base Zoning, Overlay Zoning, Floodplain, and PWD intially
 #TODO MAJOR: Second part of script should build boolean fields from initial populated fields rather than more intersect analysis
 """
@@ -89,9 +91,14 @@ try:
     Flags_Table_Temp = 'Flags_Table_Temp'
     Council_Districts_Local = 'Districts_'
     Park_IDs_Local = 'ParkNameIDs_'
-    PPR_Assets_Local = 'PPRAssests_'
-    PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
-    PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
+    #TODO Park Asset based inputs will be replaced upon integration of new PPR Properties dataset
+    #PPR_Assets_Local = 'PPRAssests_'
+    #PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
+    #PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
+
+    # Temporary Work Around Inputs
+    #TODO This input should be deleted upone restoration of Park Inputs
+    PPR_Assets_Workaround = 'S:\\GIS\\01_Dani_Interrante_Project_Folder\\01_Git_Forks_Dani\\LI_PLAN_REVIEW_FLAGS\\TempParkData.gdb\\TempParkRows' #TODO Fix path for production
 
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CityAveSiteReview'
@@ -130,11 +137,16 @@ try:
     if arcpy.Exists(PWD_Parcels_Raw):
         arcpy.Delete_management(PWD_Parcels_Raw)
     arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Raw)
+    #TODO Restore with new PPR Property dataset
+    """
     print('Updating PPR Assets')
     if arcpy.Exists(PPR_Assets_Local):
         arcpy.Delete_management(PPR_Assets_Local)
     arcpy.FeatureClassToFeatureClass_conversion(PPR_Assets, localWorkspace, PPR_Assets_Local)
-
+    """
+    #TODO All of Step 3b will be temporarily by-passed and replaced with a simple append of last successful cut of park asset parcels
+    arcpy.Append_management(PPR_Assets_Workaround, PWD_Parcels_Raw, 'NO_TEST')
+    """
     # Step 3B: Merge Parks with Parcels
     # Determine if parks have been added yet
     tCursor = arcpy.da.SearchCursor(PWD_Parcels_Raw, 'PARCELID')
@@ -178,7 +190,6 @@ try:
         print('Adding and calculating geometry')
         arcpy.AddGeometryAttributes_management(PPR_Assets_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
         arcpy.AddField_management(PPR_Assets_Temp, 'PARCEL_AREA', 'LONG')
-        # arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
         arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
 
         # Join Park IDs to Temp Parks Layer
@@ -199,7 +210,7 @@ try:
         fms.addFieldMap(fm_ID)
         fms.addFieldMap(fm_Area)
         arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Raw, schema_type='NO_TEST', field_mapping=fms)
-
+    """
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
     print('Copying Districts Local')
