@@ -30,7 +30,7 @@ print('''Starting script 'PermitReviewScripts.py'...''')
 # Step 1: Configure log file
 try:
     print('Step 1: Configuring log file...')
-    log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
+    log_file_path = 'E:\\LI_PLAN_REVIEW_FLAGS\\Logs\\PermitReviewFlags.log'
     log = logging.getLogger('PR Flags Part 1')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
@@ -67,7 +67,7 @@ try:
     GISLNI_Corner_Properties = GISLNI.sde_path + '\\GIS_LNI.PR_CORNER_PROPERTIES'
     DataBridge_Districts = DataBridge.sde_path + '\\GIS_LNI.LI_DISTRICTS'
     Council_Districts_2016 = DataBridge.sde_path + '\\GIS_PLANNING.Council_Districts_2016'
-    PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
+    PPR_Properties = DataBridge.sde_path + '\\GIS_PPR.PPR_Properties'
     Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
 
     # Internal data sources
@@ -89,9 +89,9 @@ try:
     Flags_Table_Temp = 'Flags_Table_Temp'
     Council_Districts_Local = 'Districts_'
     Park_IDs_Local = 'ParkNameIDs_'
-    PPR_Assets_Local = 'PPRAssests_'
-    PPR_Assets_Temp_Pre_Dissolve = 'in_memory\\PPR_Assets_Temp_Pre_Dissolve'
-    PPR_Assets_Temp = 'in_memory\\PPR_Assets_Temp'
+    PPR_Properties_Local = 'PPRProperties_'
+    PPR_Properties_Temp_Pre_Dissolve = 'in_memory\\PPR_Properties_Temp_Pre_Dissolve'
+    PPR_Properties_Temp = 'in_memory\\PPR_Properties_Temp'
 
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CityAveSiteReview'
@@ -130,10 +130,14 @@ try:
     if arcpy.Exists(PWD_Parcels_Raw):
         arcpy.Delete_management(PWD_Parcels_Raw)
     arcpy.FeatureClassToFeatureClass_conversion(PWD_PARCELS_DataBridge, localWorkspace, PWD_Parcels_Raw)
-    print('Updating PPR Assets')
-    if arcpy.Exists(PPR_Assets_Local):
-        arcpy.Delete_management(PPR_Assets_Local)
-    arcpy.FeatureClassToFeatureClass_conversion(PPR_Assets, localWorkspace, PPR_Assets_Local)
+    print('Updating PPR Properties')
+    if arcpy.Exists(PPR_Properties_Local):
+        arcpy.Delete_management(PPR_Properties_Local)
+    # you need to apply the where clause so you only capture the parent feature of families of PPR_Property features
+    arcpy.FeatureClassToFeatureClass_conversion(PPR_Properties, localWorkspace, PPR_Properties_Local, where_clause="NESTED = 'N'")
+
+    print('updated feature classes')
+    logging.info('updated feature classes')
 
     # Step 3B: Merge Parks with Parcels
     # Determine if parks have been added yet
@@ -142,18 +146,18 @@ try:
     isNeg = min([int(row[0]) for row in tCursor])
     del tCursor
     if isNeg > 0:
-        log.info('Adding new park data')
+        logging.info('Adding new park data')
         print('Adding new park data')
-        cursor1 = arcpy.da.SearchCursor(Park_IDs, ['CHILD_OF', 'LI_TEMP_ID'])
-        parkDict = {row[0]: row[1] for row in cursor1}
+        cursor1 = arcpy.da.SearchCursor(Park_IDs, ['PARENT_NAME', 'LI_TEMP_ID', 'CHILD_OF', 'DPP_ASSET_ID'])
+        parkDict = {row[0]: row[1:4] for row in cursor1}
         del cursor1
-        minID = min([v for v in parkDict.values()])
+        minID = min([v for v in parkDict.values()])[0]
         print('Dissolving Parks Polygons')
-        arcpy.Dissolve_management(PPR_Assets_Local, PPR_Assets_Temp, ['CHILD_OF'])
+        arcpy.Dissolve_management(PPR_Properties_Local, PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
 
         # The IDs are negative so we're looking for the next LOWEST value to add
-        cursor2 = arcpy.da.SearchCursor(PPR_Assets_Temp, ['CHILD_OF'])
-        cursor2b = arcpy.da.InsertCursor(Park_IDs, ['CHILD_OF', 'LI_TEMP_ID'])
+        cursor2 = arcpy.da.SearchCursor(PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
+        cursor2b = arcpy.da.InsertCursor(Park_IDs, ['PARENT_NAME', 'LI_TEMP_ID', 'DPP_ASSET_ID'])
         noChange = True
         edit = arcpy.da.Editor(editDB)
         try:
@@ -165,8 +169,7 @@ try:
             if row[0] not in parkDict:
                 noChange = False
                 minID -= 1
-                parkDict[row[0]] = minID
-                cursor2b.insertRow([row[0], minID])
+                cursor2b.insertRow([row[0], minID, row[1]])
         del cursor2
         del cursor2b
         try:
@@ -176,29 +179,30 @@ try:
             pass
 
         print('Adding and calculating geometry')
-        arcpy.AddGeometryAttributes_management(PPR_Assets_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
-        arcpy.AddField_management(PPR_Assets_Temp, 'PARCEL_AREA', 'LONG')
+        arcpy.AddGeometryAttributes_management(PPR_Properties_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
+        arcpy.AddField_management(PPR_Properties_Temp, 'PARCEL_AREA', 'LONG')
         # arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
-        arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
+        arcpy.CalculateField_management(PPR_Properties_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
+
 
         # Join Park IDs to Temp Parks Layer
-        arcpy.JoinField_management(PPR_Assets_Temp, 'CHILD_OF', Park_IDs, 'CHILD_OF', ['LI_TEMP_ID'])
+        arcpy.JoinField_management(PPR_Properties_Temp, 'PARENT_NAME', Park_IDs, 'PARENT_NAME', ['LI_TEMP_ID'])
 
         # Map Fields for Append
         fms = arcpy.FieldMappings()
         fm_ID = arcpy.FieldMap()
-        fm_ID.addInputField(PPR_Assets_Temp, 'LI_TEMP_ID')
+        fm_ID.addInputField(PPR_Properties_Temp, 'LI_TEMP_ID')
         fm_ID_Out = fm_ID.outputField
         fm_ID_Out.name = 'PARCELID'
         fm_ID.outputField = fm_ID_Out
         fm_Area = arcpy.FieldMap()
-        fm_Area.addInputField(PPR_Assets_Temp, 'PARCEL_AREA')
+        fm_Area.addInputField(PPR_Properties_Temp, 'PARCEL_AREA')
         fm_Area_Out = fm_Area.outputField
         fm_Area_Out.name = 'GROSS_AREA'
         fm_Area.outputField = fm_Area_Out
         fms.addFieldMap(fm_ID)
         fms.addFieldMap(fm_Area)
-        arcpy.Append_management(PPR_Assets_Temp, PWD_Parcels_Raw, schema_type='NO_TEST', field_mapping=fms)
+        arcpy.Append_management(PPR_Properties_Temp, PWD_Parcels_Raw, schema_type='NO_TEST', field_mapping=fms)
 
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
@@ -216,19 +220,18 @@ try:
     arcpy.Delete_management(CornerProperties)
     arcpy.Delete_management(PWD_Parcels_Raw)
     arcpy.Delete_management(Districts)
-    print('Spatial Joing Parcels and Corner Properties')
+    print('Spatial Join Parcels and Corner Properties')
     arcpy.SpatialJoin_analysis(PWD_PARCELS_SJ, CornerPropertiesSJ_P, PWD_Parcels_Working)
     arcpy.Delete_management(CornerPropertiesSJ_P)
     arcpy.Delete_management(PWD_PARCELS_SJ)
     print('SUCCESS at Step 3')
-    ############################################################################################################
-
 
     # Step 3C: Create plan review feature classes
 
     print('Copying Overlays local')
     arcpy.FeatureClassToFeatureClass_conversion(Zoning_SteepSlopeProtectArea_r, localWorkspace, Zoning_SteepSlope)
-    arcpy.FeatureClassToFeatureClass_conversion(GSI_SMP_TYPES, localWorkspace, PWD_GSI_SMP_TYPES, where_clause="OWNER IN ('PPRPWDMAINT', 'PRIVPWDMAINT', 'PWD')")
+    arcpy.FeatureClassToFeatureClass_conversion(GSI_SMP_TYPES, localWorkspace, PWD_GSI_SMP_TYPES,
+                                                where_clause="OWNER IN ('PPRPWDMAINT', 'PRIVPWDMAINT', 'PWD')")
 
     print('Adding Corner properties to dictionary')
     cornerPropertyCursor = arcpy.da.SearchCursor(PWD_Parcels_Working,
@@ -285,13 +288,13 @@ try:
             # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
             actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
             arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
-            #NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
+            # NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
             """
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
             arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
                                             "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
-        
+
             """
             fieldList = ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA', 'POLY_AREA',
                          'ThinessRatio', reviewField]
@@ -305,7 +308,8 @@ try:
                 if count in breaks:
                     print('Parsing Intersect FC ' + str(int(round(count * 100.0 / countin))) + '% complete...')
                 # Only polygons with a thiness ratio of over 0.3 and a parcel coverage of more than 3% are included in analysis
-                if row[1] != '' and row[1] is not None and row[7] != '' and (row[5] / float(row[4])) > 0.01: #0.03  # and row[6] >  0.3 :
+                if row[1] != '' and row[1] is not None and row[7] != '' and (
+                        row[5] / float(row[4])) > 0.01:  # 0.03  # and row[6] >  0.3 :
                     # If parcel has not made it into dictionary, parcel gets a new entry added
                     if row[0] not in parcelDict and reviewType != zonB and reviewType != zonO:
                         tempDict = {'Address': row[1], 'PAC': [], 'PCPC': [], 'TempPCPC': [], 'PHC': [], 'PWD': [],
@@ -422,7 +426,8 @@ try:
             parcelFlag(*inputs)
 
     # Add remaining parcels to table
-    remainingCursor = arcpy.da.SearchCursor(PWD_Parcels_Working, ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
+    remainingCursor = arcpy.da.SearchCursor(PWD_Parcels_Working,
+                                            ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
     print('Adding remaining parcels to dictionary')
     for row in remainingCursor:
         if row[0] not in parcelDict:
