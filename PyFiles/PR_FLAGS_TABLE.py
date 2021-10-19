@@ -164,6 +164,11 @@ try:
             edit.startEditing(False, True)
             edit.startOperation()
         except:
+            tb = sys.exc_info()[2]
+            tbinfo = traceback.format_tb(tb)[0]
+            pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+            arcpy.AddError(pymsg)
+            log.error(pymsg)
             pass
         for row in cursor2:
             if row[0] not in parkDict:
@@ -176,6 +181,11 @@ try:
             edit.stopOperation()
             edit.stopEditing(True)
         except:
+            tb = sys.exc_info()[2]
+            tbinfo = traceback.format_tb(tb)[0]
+            pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+            arcpy.AddError(pymsg)
+            log.error(pymsg)
             pass
 
         print('Adding and calculating geometry')
