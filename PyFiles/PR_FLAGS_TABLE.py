@@ -156,13 +156,11 @@ try:
         arcpy.Dissolve_management(PPR_Properties_Local, PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
 
         # The IDs are negative so we're looking for the next LOWEST value to add
-        cursor2 = arcpy.da.SearchCursor(PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
-        cursor2b = arcpy.da.InsertCursor(Park_IDs, ['PARENT_NAME', 'LI_TEMP_ID', 'DPP_ASSET_ID'])
-        noChange = True
         edit = arcpy.da.Editor(editDB)
         try:
-            edit.startEditing(False, True)
-            edit.startOperation()
+            'Whatup'
+            #edit.startEditing(False, True)
+            #edit.startOperation()
         except:
             tb = sys.exc_info()[2]
             tbinfo = traceback.format_tb(tb)[0]
@@ -170,16 +168,22 @@ try:
             arcpy.AddError(pymsg)
             log.error(pymsg)
             pass
-        for row in cursor2:
+        cursor2 = arcpy.da.SearchCursor(PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
+        pprList = [[row[0], row[1]] for row in cursor2]
+        del cursor2
+        cursor2b = arcpy.da.InsertCursor(Park_IDs, ['PARENT_NAME', 'LI_TEMP_ID', 'DPP_ASSET_ID'])
+        noChange = True
+        for row in pprList:
             if row[0] not in parkDict:
                 noChange = False
                 minID -= 1
                 cursor2b.insertRow([row[0], minID, row[1]])
-        del cursor2
+        #del cursor2
         del cursor2b
         try:
-            edit.stopOperation()
-            edit.stopEditing(True)
+            'Whatup'
+            #edit.stopOperation()
+            #edit.stopEditing(True)
         except:
             tb = sys.exc_info()[2]
             tbinfo = traceback.format_tb(tb)[0]
