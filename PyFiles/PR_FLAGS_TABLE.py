@@ -12,25 +12,29 @@ The final product is pushed back to databridge in CopyToEnterprise.py
 import datetime
 import logging
 import sys
+import os
 import traceback
 from datetime import timedelta
 
 import arcpy
 from sde_connections import DataBridge, GISLNI
-
-localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
+dir_path = os.path.dirname(os.path.realpath(__file__))
+localWorkspace = log_file_path = os.path.dirname(dir_path) + '\\Workspace.gdb'
 inMemory = 'in_memory'
 
 arcpy.env.workspace = localWorkspace
 arcpy.env.overwriteOutput = True
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(2272)
+arcpy.env.geographicTransformations = 'WGS_1984_(ITRF00)_To_NAD_1983'
 editDB = GISLNI.sde_path
 edit = arcpy.da.Editor(editDB)
 print('''Starting script 'PermitReviewScripts.py'...''')
 
 # Step 1: Configure log file
 try:
+
     print('Step 1: Configuring log file...')
-    log_file_path = 'E:\\LI_PLAN_REVIEW_FLAGS\\Logs\\PermitReviewFlags.log'
+    log_file_path = os.path.dirname(dir_path) + '\\Logs\\PermitReviewFlags.log'
     log = logging.getLogger('PR Flags Part 1')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
@@ -294,7 +298,7 @@ try:
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
             arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
                                             "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
-
+        
             """
             fieldList = ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA', 'POLY_AREA',
                          'ThinessRatio', reviewField]
@@ -402,6 +406,8 @@ try:
                   PAC_BuildIDSignageReview,
                   PAC_ParkwayBufferReview, PAC_SinageSpecialControl, PHC_HistoricalResReview, PWD_GreenRoofReview,
                   PWD_GSI_Buffer]
+    #reviewList = [PHC_HistoricalResReview]
+
 
     # Call the parcelFlag funtion on each plan review input in order to create the plan review feature classes
     currentTract = 'CurrentDistrict'
@@ -474,6 +480,7 @@ try:
              slope])
 
     log.info('PR Flags Part 1 complete')
+
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
