@@ -16,7 +16,7 @@ from sde_connections import DataBridge
 # Step 1: Configure log file
 try:
     print('Step 1: Configuring log file...')
-    log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
+    log_file_path = 'D:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
     log = logging.getLogger('PR Flags Part 3 - Zoning Overlays')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
@@ -54,7 +54,7 @@ try:
     Park_IDs_Local = 'ParkNameIDs_'
     PWD_Parcels_Working = 'PWDParcels_Working'
 
-    localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
+    localWorkspace = 'D:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
     inMemory = 'in_memory'
 
     arcpy.env.workspace = localWorkspace

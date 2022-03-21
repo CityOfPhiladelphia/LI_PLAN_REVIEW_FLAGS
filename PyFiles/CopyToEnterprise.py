@@ -14,7 +14,7 @@ from sde_connections import DataBridge_GIS_LNI, GISLNI
 # Step 1: Configure log file
 try:
     print('Step 1: Configuring log file...')
-    log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
+    log_file_path = 'D:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
     log = logging.getLogger('PR Flags Part 5 - Copying to Enterprise')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
@@ -34,13 +34,13 @@ try:
     log.info('Truncating GISLNI')
     arcpy.TruncateTable_management(GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY')
     log.info('Appending to GISLNI')
-    arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
+    arcpy.Append_management('D:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', GISLNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
     log.info('GISLNI Table Updated')
 
     log.info('Truncating DataBridge')
     arcpy.TruncateTable_management(DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY')
     log.info('Appending to DataBridge')
-    arcpy.Append_management('E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
+    arcpy.Append_management('D:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb\\Flags_Table_Temp', DataBridge_GIS_LNI.sde_path+'\\GIS_LNI.LI_PR_FLAG_SUMMARY', 'NO_TEST')
     log.info('DataBridge Table Updated')
 except:
     msgs = arcpy.GetMessages(2)
