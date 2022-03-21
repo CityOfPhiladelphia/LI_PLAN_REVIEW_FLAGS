@@ -35,6 +35,7 @@ The PAC review layer indicates one of three review types:
   * NCA Neighborhood Commercial Area Overlay District - North Delaware Avenue
   * NCA Neighborhood Commercial Area Overlay District - Spring Garden
   * Accessory Sign Controls - Special Controls for Cobbs Creek, Roosevelt Boulevard, and Department of Parks and Recreation Land
+  * NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea
   
   
 
