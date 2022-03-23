@@ -1,11 +1,9 @@
 """
 Plan Review Flags - Part 1 of 5
-
 This script copies all source data local produces the individual flag attributes for every property.
 Base Zoning, Overlay Zoning, and RCO information are populated by subsequent scripts in this package.
 These processes were moved to separate scripts due to CPU memory issues
 The final product is pushed back to databridge in CopyToEnterprise.py
-
 #TODO MAJOR: Rewrite entire process into 1 .py file.  New script should populate Base Zoning, Overlay Zoning, Floodplain, and PWD intially
 #TODO MAJOR: Second part of script should build boolean fields from initial populated fields rather than more intersect analysis
 """
@@ -104,6 +102,7 @@ try:
     GIS_LNI_PR_PCPC_CenterCityFacadeReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CenterCityFacadeReview'
     GIS_LNI_PR_PCPC_NeighborConsReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_NeighborConsReview'
     GIS_LNI_PR_PCPC_WissWaterSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_WissWaterSiteReview'
+    GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_GtownMtAiryFacReview'
     GIS_LNI_PR_PCPC_100YrFloodPlain = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_100YrFloodPlain'
     GIS_LNI_PR_PCPC_SteepSlope = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_SteepSlope'
     GIS_LNI_PR_PCPC_SkyPlaneReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_SkyPlaneReview'
@@ -379,6 +378,8 @@ try:
     PCPC_WissahickonWatershedSiteReview = ['WissahickonWatershedSiteReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                                            "Overlay_Name IN('/NCO Neighborhood Conservation Overlay District - Central Roxborough','/NCO Neighborhood Conservation Overlay District - Overbrook Farms','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 1','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 2','/NCO Neighborhood Conservation Overlay District - Queen Village','/NCO Neighborhood Conservation Overlay District - Ridge Park Roxborough')",
                                            GIS_LNI_PR_PCPC_WissWaterSiteReview]
+    PCPC_GermantownMtAirySubareaFacadeReview = ['GermantownAveMtAiryFaçReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
+                                           "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea')", GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview]
     PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Year Flood Plain"', None,
                             GIS_LNI_PR_PCPC_100YrFloodPlain]
     PCPC_SteepSlope = ['SteepSlopeReview', pcpcR, Zoning_SteepSlopeProtectArea_r, '"Steep Slope"', None,
@@ -402,14 +403,14 @@ try:
     # List to iterate inputs through parcel flag function
     reviewList = [PCPC_CityAveSiteReview, PCPC_RidgeAveFacadeReview, PCPC_MasterPlanReview, PCPC_CenterCityFacadeReview,
                   PCPC_NeighborConsReview,
-                  PCPC_WissahickonWatershedSiteReview, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
+                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
                   PAC_BuildIDSignageReview,
                   PAC_ParkwayBufferReview, PAC_SinageSpecialControl, PHC_HistoricalResReview, PWD_GreenRoofReview,
                   PWD_GSI_Buffer]
     #reviewList = [PHC_HistoricalResReview]
 
 
-    # Call the parcelFlag funtion on each plan review input in order to create the plan review feature classes
+    # Call the parcelFlag function on each plan review input in order to create the plan review feature classes
     currentTract = 'CurrentDistrict'
     tempParcels = 'TempParcels'
     tempZone = 'TempZone'
@@ -493,8 +494,8 @@ except:
     from phila_mail import server
 
     sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov',
-                      'LIGISTeam@phila.gov', 'Jessica.bradley@phila.gov']
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'daniel.whaland@phila.gov', 'bailey.glover@Phila.gov',
+                      'LIGISTeam@phila.gov']
     commaspace = ', '
     msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
     msg['To'] = commaspace.join(recipientslist)
