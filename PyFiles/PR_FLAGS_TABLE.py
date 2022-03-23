@@ -13,11 +13,13 @@ import sys
 import os
 import traceback
 from datetime import timedelta
+
 import arcpy
 from sde_connections import DataBridge, GISLNI
 dir_path = os.path.dirname(os.path.realpath(__file__))
 localWorkspace = log_file_path = os.path.dirname(dir_path) + '\\Workspace.gdb'
 inMemory = 'in_memory'
+
 arcpy.env.workspace = localWorkspace
 arcpy.env.overwriteOutput = True
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(2272)
@@ -25,8 +27,10 @@ arcpy.env.geographicTransformations = 'WGS_1984_(ITRF00)_To_NAD_1983'
 editDB = GISLNI.sde_path
 edit = arcpy.da.Editor(editDB)
 print('''Starting script 'PermitReviewScripts.py'...''')
+
 # Step 1: Configure log file
 try:
+
     print('Step 1: Configuring log file...')
     log_file_path = os.path.dirname(dir_path) + '\\Logs\\PermitReviewFlags.log'
     log = logging.getLogger('PR Flags Part 1')
@@ -44,13 +48,16 @@ except:
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
     arcpy.AddError(pymsg)
     sys.exit(1)
+
 try:
     log.info('Beginning PR Flags Part 1')
+
     # Step 2: Set script parameters
     print('Step 2: Setting script parameters...')
     # Identify Dates
     today = datetime.datetime.today()
     oneWeekAgo = today - timedelta(days=7)
+
     # External data sources
     PWD_PARCELS_DataBridge = DataBridge.sde_path + '\\GIS_WATER.PWD_PARCELS'
     Zoning_BaseDistricts = DataBridge.sde_path + '\\GIS_PLANNING.Zoning_BaseDistricts'
@@ -64,6 +71,7 @@ try:
     Council_Districts_2016 = DataBridge.sde_path + '\\GIS_PLANNING.Council_Districts_2016'
     PPR_Properties = DataBridge.sde_path + '\\GIS_PPR.PPR_Properties'
     Park_IDs = GISLNI.sde_path + '\\GIS_LNI.PR_PARK_NAME_IDS'
+
     # Internal data sources
     PWD_Parcels_Raw = 'PWDParcels_Raw'
     PWD_Parcels_Working = 'PWDParcels_Working'
@@ -86,6 +94,7 @@ try:
     PPR_Properties_Local = 'PPRProperties_'
     PPR_Properties_Temp_Pre_Dissolve = 'in_memory\\PPR_Properties_Temp_Pre_Dissolve'
     PPR_Properties_Temp = 'in_memory\\PPR_Properties_Temp'
+
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CityAveSiteReview'
     GIS_LNI_PR_PCPC_RidgeAveFacadeReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_RidgeAveFacadeReview'
@@ -103,8 +112,10 @@ try:
     GIS_LNI_PR_PWD_GSI_Buffer = GISLNI.sde_path + '\\GIS_LNI.PR_PWD_GSI_Buffer'
     GIS_LNI_PR_PWD_GreenRoofReview = GISLNI.sde_path + '\\GIS_LNI.PR_PWD_GreenRoofReview'
     GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path + '\\GIS_LNI.PR_PHC'
+
     PR_FLAG_SUMMARY = GISLNI.sde_path + '\\GIS_LNI.LI_PR_FLAG_SUMMARY'
     print('SUCCESS at Step 2')
+
     # Step 3A: Update Local Copies of DataBridge Files
     print('Updating Zoning Base Districts')
     if arcpy.Exists(Zon_BaseDistricts):
@@ -127,8 +138,10 @@ try:
         arcpy.Delete_management(PPR_Properties_Local)
     # you need to apply the where clause so you only capture the parent feature of families of PPR_Property features
     arcpy.FeatureClassToFeatureClass_conversion(PPR_Properties, localWorkspace, PPR_Properties_Local, where_clause="NESTED = 'N'")
+
     print('updated feature classes')
     logging.info('updated feature classes')
+
     # Step 3B: Merge Parks with Parcels
     # Determine if parks have been added yet
     tCursor = arcpy.da.SearchCursor(PWD_Parcels_Raw, 'PARCELID')
@@ -144,6 +157,7 @@ try:
         minID = min([v for v in parkDict.values()])[0]
         print('Dissolving Parks Polygons')
         arcpy.Dissolve_management(PPR_Properties_Local, PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
+
         # The IDs are negative so we're looking for the next LOWEST value to add
         cursor2 = arcpy.da.SearchCursor(PPR_Properties_Temp, ['PARENT_NAME', 'DPP_ASSET_ID'])
         cursor2b = arcpy.da.InsertCursor(Park_IDs, ['PARENT_NAME', 'LI_TEMP_ID', 'DPP_ASSET_ID'])
@@ -166,13 +180,17 @@ try:
             edit.stopEditing(True)
         except:
             pass
+
         print('Adding and calculating geometry')
         arcpy.AddGeometryAttributes_management(PPR_Properties_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
         arcpy.AddField_management(PPR_Properties_Temp, 'PARCEL_AREA', 'LONG')
         # arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
         arcpy.CalculateField_management(PPR_Properties_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
+
+
         # Join Park IDs to Temp Parks Layer
         arcpy.JoinField_management(PPR_Properties_Temp, 'PARENT_NAME', Park_IDs, 'PARENT_NAME', ['LI_TEMP_ID'])
+
         # Map Fields for Append
         fms = arcpy.FieldMappings()
         fm_ID = arcpy.FieldMap()
@@ -188,6 +206,7 @@ try:
         fms.addFieldMap(fm_ID)
         fms.addFieldMap(fm_Area)
         arcpy.Append_management(PPR_Properties_Temp, PWD_Parcels_Raw, schema_type='NO_TEST', field_mapping=fms)
+
     print('Copying Corner Properties Local')
     arcpy.FeatureClassToFeatureClass_conversion(GISLNI_Corner_Properties, localWorkspace, CornerProperties)
     print('Copying Districts Local')
@@ -209,11 +228,14 @@ try:
     arcpy.Delete_management(CornerPropertiesSJ_P)
     arcpy.Delete_management(PWD_PARCELS_SJ)
     print('SUCCESS at Step 3')
+
     # Step 3C: Create plan review feature classes
+
     print('Copying Overlays local')
     arcpy.FeatureClassToFeatureClass_conversion(Zoning_SteepSlopeProtectArea_r, localWorkspace, Zoning_SteepSlope)
     arcpy.FeatureClassToFeatureClass_conversion(GSI_SMP_TYPES, localWorkspace, PWD_GSI_SMP_TYPES,
                                                 where_clause="OWNER IN ('PPRPWDMAINT', 'PRIVPWDMAINT', 'PWD')")
+
     print('Adding Corner properties to dictionary')
     cornerPropertyCursor = arcpy.da.SearchCursor(PWD_Parcels_Working,
                                                  ['PARCELID', 'ADDRESS', 'GROSS_AREA', 'DISTRICT', 'Corner'])
@@ -227,7 +249,10 @@ try:
             parcelDict[parcel[0]] = {'Address': parcel[1], 'PAC': [], 'PCPC': [], 'TempPCPC': [], 'PHC': [], 'PWD': [],
                                      'SteepSlope': 0, 'Floodplain': 0, 'CornerProp': 0, 'ParcelArea': parcel[2],
                                      'BaseZoning': [], 'OverlayZoning': [], 'District': parcel[3]}
+
     del cornerPropertyCursor
+
+
     # Function that will be used later to create plan review feature classes by selecting certain data from
     # the overlays
     def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, outputFC, localWorkspace, parcels,
@@ -237,6 +262,7 @@ try:
             IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
             reviewLayer = reviewType + '_' + reviewName
             reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
+
             if '_Buffer' in reviewName:
                 print('Buffering')
                 arcpy.Buffer_analysis(sourceFC, reviewLayer, '50 Feet')
@@ -244,6 +270,7 @@ try:
                 print('Creating Local FC for ' + reviewName)
                 arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,
                                                             whereClause)
+
             # All FCs except for Zoning are copied to LIGISDB
             if outputFC:
                 print('Copying FC to GISLNI')
@@ -253,11 +280,14 @@ try:
                 arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON3')
                 arcpy.DeleteRows_management(outputFC)
                 arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
+
             print('Performing Intersect')
             # Create polygons where review polygons overlap with parcels
             arcpy.Intersect_analysis([parcels] + [reviewLayer], IntersectOutput, 'ALL')
             print('Intersect Complete')
+
             arcpy.Delete_management(reviewLayer)
+
             # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
             actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
             arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
@@ -305,8 +335,11 @@ try:
                         if fieldCalculation == '"Steep Slope"':
                             tempDict['SteepSlope'] = 1
                         parcelDict[row[0]] = tempDict
+
             arcpy.Delete_management(IntersectOutput)
+
             return parcelDict
+
         except:
             tb = sys.exc_info()[2]
             tbinfo = traceback.format_tb(tb)[0]
@@ -314,7 +347,10 @@ try:
             arcpy.AddError(pymsg)
             log.error(pymsg)
             sys.exit(1)
+
+
     ###################################################################################################################
+
     # Plan review flag types
     pcpcR = 'PCPC'
     pacR = 'PAC'
@@ -322,6 +358,7 @@ try:
     phcR = 'PHC'
     zonB = 'BaseZoning'
     zonO = 'OverlayZoning'
+
     # Inputs to be run through parcelFlag function in order to create the plan review feature classes
     PCPC_CityAveSiteReview = ['CityAveSiteReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                               "Overlay_Name IN('/CAO City Avenue Overlay District - City Avenue Regional Center Area','/CAO City Avenue Overlay District - City Avenue Village Center Area')",
@@ -362,6 +399,7 @@ try:
     PWD_GreenRoofReview = ['GreenRoofReview', pwdR, PWD_GSI_SMP_TYPES, '"GREEN ROOF"', "SUBTYPE IN( 10 )",
                            GIS_LNI_PR_PWD_GreenRoofReview]
     PWD_GSI_Buffer = ['GSI_Buffer', pwdR, PWD_GSI_SMP_TYPES, '"Green Infrastructure"', None, GIS_LNI_PR_PWD_GSI_Buffer]
+
     # List to iterate inputs through parcel flag function
     reviewList = [PCPC_CityAveSiteReview, PCPC_RidgeAveFacadeReview, PCPC_MasterPlanReview, PCPC_CenterCityFacadeReview,
                   PCPC_NeighborConsReview,
@@ -393,6 +431,7 @@ try:
             print('Beginning ' + r[0])
             inputs = tuple(r[:] + [localWorkspace, tempParcels, parcelDict])
             parcelFlag(*inputs)
+
     # Add remaining parcels to table
     remainingCursor = arcpy.da.SearchCursor(PWD_Parcels_Working,
                                             ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA'])
@@ -404,6 +443,7 @@ try:
                                   'Floodplain': 0, 'CornerProp': row[3], 'ParcelArea': row[4], 'BaseZoning': [],
                                   'OverlayZoning': [], 'District': row[2]}
     del remainingCursor
+
     # Update Flags Table
     arcpy.CreateTable_management(localWorkspace, Flags_Table_Temp, PR_FLAG_SUMMARY)
     # ParcelDict Schema: {PWD_PARCELID:{Address:'', PAC:[], PCPC:[], PHC:[], PWD:[], 'SteepSlope':bool, 'Floodplain':bool, CornerProp:bool, ParcelArea:'', BaseZoning:[], OverlayZoning:[], LIDistrict:''}
@@ -439,13 +479,16 @@ try:
         flagCursor.insertRow(
             [address, parcelID, pacBool, pac, pcpcBool, pcpc, phcBool, phc, pwdBool, pwd, corner, area, district, flood,
              slope])
+
     log.info('PR Flags Part 1 complete')
+
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
     pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
     arcpy.AddError(pymsg)
     log.error(pymsg)
+
     import smtplib
     from email.mime.text import MIMEText
     from phila_mail import server
