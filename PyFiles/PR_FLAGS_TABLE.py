@@ -269,6 +269,10 @@ try:
             if '_Buffer' in reviewName:
                 print('Buffering')
                 arcpy.Buffer_analysis(sourceFC, reviewLayer, '50 Feet')
+            elif 'DOR' in reviewName:
+                print('Creating Local FC for ' + reviewName)
+                arcpy.FeatureClassToFeatureClass_conversion(sourceFC, DORinputGDB, reviewLayer,
+                                                            whereClause)
             else:
                 print('Creating Local FC for ' + reviewName)
                 arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,
