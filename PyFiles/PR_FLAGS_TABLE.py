@@ -95,7 +95,7 @@ try:
     PPR_Properties_Local = 'PPRProperties_'
     PPR_Properties_Temp_Pre_Dissolve = 'in_memory\\PPR_Properties_Temp_Pre_Dissolve'
     PPR_Properties_Temp = 'in_memory\\PPR_Properties_Temp'
-    DORMismatchParcels = DORinputGDB + '\\DORMismatchParcels'
+    DORMismatchParcels = 'DORMismatchParcels'
 
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CityAveSiteReview'
