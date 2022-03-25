@@ -18,7 +18,7 @@ import arcpy
 from sde_connections import DataBridge, GISLNI
 dir_path = os.path.dirname(os.path.realpath(__file__))
 localWorkspace = log_file_path = os.path.dirname(dir_path) + '\\Workspace.gdb'
-DORinputGDB = log_file_path = os.path.dirname(dir_path) + '\\DORInput.gdb'
+DORinputGDB = os.path.dirname(dir_path) + '\\DORInput.gdb'
 inMemory = 'in_memory'
 
 arcpy.env.workspace = localWorkspace
@@ -262,7 +262,7 @@ try:
                    parcelDict):
         try:
             sourceFC = localWorkspace + '\\' + sourceFC if '.sde' not in sourceFC else sourceFC
-            DORsourceFC = DORinputGDB + '\\' + sourceFC if '.sde' not in sourceFC else sourceFC
+            DORsourceFC = DORinputGDB + '\\' + sourceFC
             IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
             reviewLayer = reviewType + '_' + reviewName
             reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
