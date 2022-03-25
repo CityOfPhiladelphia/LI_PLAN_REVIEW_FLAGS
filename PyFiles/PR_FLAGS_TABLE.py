@@ -262,6 +262,7 @@ try:
                    parcelDict):
         try:
             sourceFC = localWorkspace + '\\' + sourceFC if '.sde' not in sourceFC else sourceFC
+            DORsourceFC = DORinputGDB + '\\' + sourceFC if '.sde' not in sourceFC else sourceFC
             IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
             reviewLayer = reviewType + '_' + reviewName
             reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
@@ -271,7 +272,7 @@ try:
                 arcpy.Buffer_analysis(sourceFC, reviewLayer, '50 Feet')
             elif 'DOR' in reviewName:
                 print('Creating Local FC for ' + reviewName)
-                arcpy.FeatureClassToFeatureClass_conversion(sourceFC, DORinputGDB, reviewLayer,
+                arcpy.FeatureClassToFeatureClass_conversion(DORsourceFC, DORinputGDB, reviewLayer,
                                                             whereClause)
             else:
                 print('Creating Local FC for ' + reviewName)
