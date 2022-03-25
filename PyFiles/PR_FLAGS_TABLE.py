@@ -18,6 +18,7 @@ import arcpy
 from sde_connections import DataBridge, GISLNI
 dir_path = os.path.dirname(os.path.realpath(__file__))
 localWorkspace = log_file_path = os.path.dirname(dir_path) + '\\Workspace.gdb'
+DORinputGDB = log_file_path = os.path.dirname(dir_path) + '\\DORInput.gdb'
 inMemory = 'in_memory'
 
 arcpy.env.workspace = localWorkspace
@@ -94,6 +95,7 @@ try:
     PPR_Properties_Local = 'PPRProperties_'
     PPR_Properties_Temp_Pre_Dissolve = 'in_memory\\PPR_Properties_Temp_Pre_Dissolve'
     PPR_Properties_Temp = 'in_memory\\PPR_Properties_Temp'
+    DORMismatchParcels = DORinputGDB + '\\DORMismatchParcels'
 
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CityAveSiteReview'
@@ -112,6 +114,7 @@ try:
     GIS_LNI_PR_PWD_GSI_Buffer = GISLNI.sde_path + '\\GIS_LNI.PR_PWD_GSI_Buffer'
     GIS_LNI_PR_PWD_GreenRoofReview = GISLNI.sde_path + '\\GIS_LNI.PR_PWD_GreenRoofReview'
     GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path + '\\GIS_LNI.PR_PHC'
+    GIS_LNI_PR_PCPC_DORMismatchParcels = GISLNI.sde_path + '\\GIS_LNI.DORMismatchParcels'
 
     PR_FLAG_SUMMARY = GISLNI.sde_path + '\\GIS_LNI.LI_PR_FLAG_SUMMARY'
     print('SUCCESS at Step 2')
@@ -380,6 +383,7 @@ try:
                                            GIS_LNI_PR_PCPC_WissWaterSiteReview]
     PCPC_GermantownMtAirySubareaFacadeReview = ['GermantownAveMtAiryFaçReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                                            "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea')", GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview]
+    PCPC_DOR_Mismatch_Review = ['DORMismatchReview', pcpcR, DORMismatchParcels, '"DOR Mismatch Review"', None, GIS_LNI_PR_PCPC_DORMismatchParcels]
     PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Year Flood Plain"', None,
                             GIS_LNI_PR_PCPC_100YrFloodPlain]
     PCPC_SteepSlope = ['SteepSlopeReview', pcpcR, Zoning_SteepSlopeProtectArea_r, '"Steep Slope"', None,
@@ -403,7 +407,7 @@ try:
     # List to iterate inputs through parcel flag function
     reviewList = [PCPC_CityAveSiteReview, PCPC_RidgeAveFacadeReview, PCPC_MasterPlanReview, PCPC_CenterCityFacadeReview,
                   PCPC_NeighborConsReview,
-                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
+                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview, PCPC_DOR_Mismatch_Review, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
                   PAC_BuildIDSignageReview,
                   PAC_ParkwayBufferReview, PAC_SinageSpecialControl, PHC_HistoricalResReview, PWD_GreenRoofReview,
                   PWD_GSI_Buffer]
