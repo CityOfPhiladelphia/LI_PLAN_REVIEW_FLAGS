@@ -128,10 +128,10 @@ try:
     if arcpy.Exists(Zon_Overlays):
         arcpy.Delete_management(Zon_Overlays)
     arcpy.FeatureClassToFeatureClass_conversion(Zoning_Overlays, localWorkspace, Zon_Overlays)
-    # print('Updating Council Districts')
-    # if arcpy.Exists(Council_Districts_Local):
-    #     arcpy.Delete_management(Council_Districts_Local)
-    # arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_2016, localWorkspace, Council_Districts_Local)
+    print('Updating Council Districts')
+    if arcpy.Exists(Council_Districts_Local):
+        arcpy.Delete_management(Council_Districts_Local)
+    arcpy.FeatureClassToFeatureClass_conversion(Council_Districts_2016, localWorkspace, Council_Districts_Local)
     print('Updating PWD Parcels')
     if arcpy.Exists(PWD_Parcels_Raw):
         arcpy.Delete_management(PWD_Parcels_Raw)
@@ -285,21 +285,38 @@ try:
                                                             whereClause)
 
             # All FCs except for Zoning are copied to LIGISDB
-            if outputFC:
+            if 'DOR' not in outputFC:
                 print('Copying FC to GISLNI')
+                # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField)
                 arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
                 arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON3')
                 arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
                 arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON3')
                 arcpy.DeleteRows_management(outputFC)
                 arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
+            else:
+                print('Copying FC to GISLNI')
+                # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField)
+                arcpy.AddField_management(DORinputGDB + '\\' + reviewLayer, reviewField, 'TEXT')
+                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, reviewField, fieldCalculation, 'PYTHON3')
+                arcpy.AddField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
+                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON3')
+                arcpy.DeleteRows_management(outputFC)
+                arcpy.Append_management(DORinputGDB + '\\' + reviewLayer, outputFC, 'NO_TEST')
 
             print('Performing Intersect')
             # Create polygons where review polygons overlap with parcels
-            arcpy.Intersect_analysis([parcels] + [reviewLayer], IntersectOutput, 'ALL')
-            print('Intersect Complete')
+            if 'DOR' not in IntersectOutput:
+                arcpy.Intersect_analysis([parcels] + [reviewLayer], IntersectOutput, 'ALL')
+                print('Intersect Complete')
+            else:
+                arcpy.Intersect_analysis([parcels] + [DORinputGDB + '\\' + reviewLayer], IntersectOutput, 'ALL')
+                print('Intersect Complete')
 
-            arcpy.Delete_management(reviewLayer)
+            if 'DOR' not in reviewLayer:
+                arcpy.Delete_management(reviewLayer)
+            else:
+                arcpy.Delete_management(DORinputGDB + '\\' + reviewLayer)
 
             # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
             actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
