@@ -287,7 +287,7 @@ try:
             # All FCs except for Zoning are copied to LIGISDB
             if 'DOR' not in outputFC:
                 print('Copying FC to GISLNI')
-                # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField)
+                # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField.)
                 arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
                 arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON3')
                 arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
