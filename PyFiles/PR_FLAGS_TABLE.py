@@ -18,6 +18,7 @@ import arcpy
 from sde_connections import DataBridge, GISLNI
 dir_path = os.path.dirname(os.path.realpath(__file__))
 localWorkspace = log_file_path = os.path.dirname(dir_path) + '\\Workspace.gdb'
+DORinputGDB = os.path.dirname(dir_path) + '\\DORInput.gdb'
 inMemory = 'in_memory'
 
 arcpy.env.workspace = localWorkspace
@@ -94,6 +95,7 @@ try:
     PPR_Properties_Local = 'PPRProperties_'
     PPR_Properties_Temp_Pre_Dissolve = 'in_memory\\PPR_Properties_Temp_Pre_Dissolve'
     PPR_Properties_Temp = 'in_memory\\PPR_Properties_Temp'
+    DORMismatchParcels = 'DORMismatchParcels'
 
     # LIGISDB Output FeatureClasses
     GIS_LNI_PR_PCPC_CityAveSiteReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_CityAveSiteReview'
@@ -112,6 +114,7 @@ try:
     GIS_LNI_PR_PWD_GSI_Buffer = GISLNI.sde_path + '\\GIS_LNI.PR_PWD_GSI_Buffer'
     GIS_LNI_PR_PWD_GreenRoofReview = GISLNI.sde_path + '\\GIS_LNI.PR_PWD_GreenRoofReview'
     GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path + '\\GIS_LNI.PR_PHC'
+    GIS_LNI_PR_PCPC_DORMismatchReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_DORMismatchReview'
 
     PR_FLAG_SUMMARY = GISLNI.sde_path + '\\GIS_LNI.LI_PR_FLAG_SUMMARY'
     print('SUCCESS at Step 2')
@@ -182,7 +185,7 @@ try:
             pass
 
         print('Adding and calculating geometry')
-        arcpy.AddGeometryAttributes_management(PPR_Properties_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
+        arcpy.management.AddGeometryAttributes(PPR_Properties_Temp, 'AREA', Area_Unit='SQUARE_FEET_US')
         arcpy.AddField_management(PPR_Properties_Temp, 'PARCEL_AREA', 'LONG')
         # arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
         arcpy.CalculateField_management(PPR_Properties_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
@@ -258,7 +261,13 @@ try:
     def parcelFlag(reviewName, reviewType, sourceFC, fieldCalculation, whereClause, outputFC, localWorkspace, parcels,
                    parcelDict):
         try:
-            sourceFC = localWorkspace + '\\' + sourceFC if '.sde' not in sourceFC else sourceFC
+            if '.sde' in sourceFC:
+                sourceFC = sourceFC
+            elif 'DOR' in sourceFC:
+                sourceFC = DORinputGDB + '\\' + sourceFC
+            else:
+                sourceFC = localWorkspace + '\\' + sourceFC
+
             IntersectOutput = localWorkspace + '\\' + reviewName + '_intersect'
             reviewLayer = reviewType + '_' + reviewName
             reviewField = 'CODE' if reviewType == zonB else 'OVERLAY_NAME' if reviewType == zonO else reviewName + 'ReviewReason'
@@ -266,38 +275,59 @@ try:
             if '_Buffer' in reviewName:
                 print('Buffering')
                 arcpy.Buffer_analysis(sourceFC, reviewLayer, '50 Feet')
+            elif 'DOR' in reviewName:
+                print('Creating Local FC for ' + reviewName)
+                arcpy.FeatureClassToFeatureClass_conversion(sourceFC, DORinputGDB, reviewLayer,
+                                                            whereClause)
             else:
                 print('Creating Local FC for ' + reviewName)
                 arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,
                                                             whereClause)
 
             # All FCs except for Zoning are copied to LIGISDB
-            if outputFC:
+            if 'DOR' not in outputFC:
                 print('Copying FC to GISLNI')
+                # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField)
                 arcpy.AddField_management(reviewLayer, reviewField, 'TEXT')
                 arcpy.CalculateField_management(reviewLayer, reviewField, fieldCalculation, 'PYTHON3')
                 arcpy.AddField_management(reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
                 arcpy.CalculateField_management(reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON3')
                 arcpy.DeleteRows_management(outputFC)
                 arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
+            else:
+                print('Copying FC to GISLNI')
+                # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField)
+                arcpy.AddField_management(DORinputGDB + '\\' + reviewLayer, reviewField, 'TEXT')
+                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, reviewField, fieldCalculation, 'PYTHON3')
+                arcpy.AddField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
+                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON3')
+                arcpy.DeleteRows_management(outputFC)
+                arcpy.Append_management(DORinputGDB + '\\' + reviewLayer, outputFC, 'NO_TEST')
 
             print('Performing Intersect')
             # Create polygons where review polygons overlap with parcels
-            arcpy.Intersect_analysis([parcels] + [reviewLayer], IntersectOutput, 'ALL')
-            print('Intersect Complete')
+            if 'DOR' not in IntersectOutput:
+                arcpy.Intersect_analysis([parcels] + [reviewLayer], IntersectOutput, 'ALL')
+                print('Intersect Complete')
+            else:
+                arcpy.Intersect_analysis([parcels] + [DORinputGDB + '\\' + reviewLayer], IntersectOutput, 'ALL')
+                print('Intersect Complete')
 
-            arcpy.Delete_management(reviewLayer)
+            if 'DOR' not in reviewLayer:
+                arcpy.Delete_management(reviewLayer)
+            else:
+                arcpy.Delete_management(DORinputGDB + '\\' + reviewLayer)
 
             # To ensure no slivers are included a thiness ratio and shape area are calculated for intersecting polygons
             actualFields = [f.name for f in arcpy.ListFields(IntersectOutput)]
             arcpy.AddField_management(IntersectOutput, 'ThinessRatio', 'FLOAT')
             # NOTE Thiness calculation was removed by request, this is designed remove small overlaps in zoning from adjacent parcels
-            arcpy.AddGeometryAttributes_management(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
+            arcpy.management.AddGeometryAttributes(IntersectOutput, 'AREA', Area_Unit='SQUARE_FEET_US')
             """
             arcpy.AddGeometryAttributes_management(IntersectOutput, 'PERIMETER_LENGTH', 'FEET_US')
             arcpy.CalculateField_management(IntersectOutput, 'ThinessRatio',
                                             "4 * 3.14 * !POLY_AREA! / (!PERIMETER! * !PERIMETER!)", 'PYTHON_9.3')
-        
+
             """
             fieldList = ['PARCELID', 'ADDRESS', 'DISTRICT', 'Corner', 'GROSS_AREA', 'POLY_AREA',
                          'ThinessRatio', reviewField]
@@ -380,6 +410,7 @@ try:
                                            GIS_LNI_PR_PCPC_WissWaterSiteReview]
     PCPC_GermantownMtAirySubareaFacadeReview = ['GermantownAveMtAiryFaçReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                                            "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea')", GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview]
+    PCPC_DOR_Mismatch_Review = ['DORMismatchReview', pcpcR, DORMismatchParcels, '"DOR Mismatch Review"', None, GIS_LNI_PR_PCPC_DORMismatchReview]
     PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Year Flood Plain"', None,
                             GIS_LNI_PR_PCPC_100YrFloodPlain]
     PCPC_SteepSlope = ['SteepSlopeReview', pcpcR, Zoning_SteepSlopeProtectArea_r, '"Steep Slope"', None,
@@ -403,7 +434,7 @@ try:
     # List to iterate inputs through parcel flag function
     reviewList = [PCPC_CityAveSiteReview, PCPC_RidgeAveFacadeReview, PCPC_MasterPlanReview, PCPC_CenterCityFacadeReview,
                   PCPC_NeighborConsReview,
-                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
+                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview, PCPC_DOR_Mismatch_Review, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
                   PAC_BuildIDSignageReview,
                   PAC_ParkwayBufferReview, PAC_SinageSpecialControl, PHC_HistoricalResReview, PWD_GreenRoofReview,
                   PWD_GSI_Buffer]
@@ -489,19 +520,19 @@ except:
     arcpy.AddError(pymsg)
     log.error(pymsg)
 
-    import smtplib
-    from email.mime.text import MIMEText
-    from phila_mail import server
-
-    sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'daniel.whaland@phila.gov', 'bailey.glover@Phila.gov',
-                      'LIGISTeam@phila.gov']
-    commaspace = ', '
-    msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
-    msg['To'] = commaspace.join(recipientslist)
-    msg['From'] = sender
-    msg['X-Priority'] = '2'
-    msg['Subject'] = 'Plan Review Flags Table Update Failure'
-    server.server.sendmail(sender, recipientslist, msg.as_string())
-    server.server.quit()
-    sys.exit(1)
+    # import smtplib
+    # from email.mime.text import MIMEText
+    # from phila_mail import server
+    #
+    # sender = 'LIGISTeam@phila.gov'
+    # recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'daniel.whaland@phila.gov', 'bailey.glover@Phila.gov',
+    #                   'LIGISTeam@phila.gov']
+    # commaspace = ', '
+    # msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
+    # msg['To'] = commaspace.join(recipientslist)
+    # msg['From'] = sender
+    # msg['X-Priority'] = '2'
+    # msg['Subject'] = 'Plan Review Flags Table Update Failure'
+    # server.server.sendmail(sender, recipientslist, msg.as_string())
+    # server.server.quit()
+    # sys.exit(1)
