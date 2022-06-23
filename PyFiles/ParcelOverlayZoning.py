@@ -17,8 +17,7 @@ from sde_connections import GISLNI
 # Step 1: Configure log file
 try:
     print('Step 1: Configuring log file...')
-    #log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log' #TODO Uncomment for prod
-    log_file_path = 'G:\\01_Dani_Interrante_Project_Folder\\01_Git_Forks_Dani\\LI_PLAN_REVIEW_FLAGS\\Logs\\PermitReviewFlags.log' #TODO Delete for prod
+    log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
     log = logging.getLogger('PR Flags Part 3 - Zoning Overlays')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
@@ -57,8 +56,7 @@ try:
     Park_IDs_Local = 'ParkNameIDs_'
     PWD_Parcels_Working = 'PWDParcels_Working'
 
-    #localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb' #TODO Uncomment for prod
-    localWorkspace = 'G:\\01_Dani_Interrante_Project_Folder\\01_Git_Forks_Dani\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'#TODO delete for prod
+    localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
     inMemory = 'in_memory'
 
     arcpy.env.workspace = localWorkspace
