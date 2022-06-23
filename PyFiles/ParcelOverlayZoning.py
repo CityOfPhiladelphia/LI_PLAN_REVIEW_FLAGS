@@ -12,11 +12,13 @@ from datetime import timedelta
 
 import arcpy
 from sde_connections import DataBridge
+from sde_connections import GISLNI
 
 # Step 1: Configure log file
 try:
     print('Step 1: Configuring log file...')
-    log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
+    #log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log' #TODO Uncomment for prod
+    log_file_path = 'G:\\01_Dani_Interrante_Project_Folder\\01_Git_Forks_Dani\\LI_PLAN_REVIEW_FLAGS\\Logs\\PermitReviewFlags.log' #TODO Delete for prod
     log = logging.getLogger('PR Flags Part 3 - Zoning Overlays')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
@@ -38,6 +40,7 @@ try:
     oneWeekAgo = today - timedelta(days=7)
 
     Zoning_Overlays = DataBridge.sde_path+'\\GIS_PLANNING.Zoning_Overlays'
+    GIS_LNI_PR_PCPC_DORMismatchReview = GISLNI.sde_path + '\\GIS_LNI.PR_PCPC_DORMismatchReview'
     PPR_Assets = DataBridge.sde_path + '\\GIS_PPR.PPR_Assets'
     PWD_PARCELS_DataBridge = DataBridge.sde_path+'\\GIS_WATER.PWD_PARCELS'
 
@@ -54,11 +57,15 @@ try:
     Park_IDs_Local = 'ParkNameIDs_'
     PWD_Parcels_Working = 'PWDParcels_Working'
 
-    localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'
+    #localWorkspace = 'E:\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb' #TODO Uncomment for prod
+    localWorkspace = 'G:\\01_Dani_Interrante_Project_Folder\\01_Git_Forks_Dani\\LI_PLAN_REVIEW_FLAGS\\Workspace.gdb'#TODO delete for prod
     inMemory = 'in_memory'
 
     arcpy.env.workspace = localWorkspace
     arcpy.env.overwriteOutput = True
+
+    #Append DOR Mismatch Review Layer to Overlays.  This is a temporary function until the DOR/Zoning data issue is cleaned up
+    arcpy.Append_management(GIS_LNI_PR_PCPC_DORMismatchReview, zoningFC, 'NO_TEST')
 
     #Append first word from all overlay types to list.  Script will iterate through these values below to match to appropriate parcel.  This is being done to ease use of memory
     print(zoningFC)
