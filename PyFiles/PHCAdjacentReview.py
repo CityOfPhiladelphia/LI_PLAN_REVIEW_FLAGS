@@ -11,7 +11,7 @@ import traceback
 from datetime import timedelta
 
 import arcpy
-from sde_connections import GISLNI, DataBridge_GIS_LNI
+from sde_connections import GISLNI, DataBridge_GIS_LNI, DataBridge
 
 # Step 1: Configure log file
 try:
@@ -44,7 +44,7 @@ try:
     arcpy.env.overwriteOutput = True
 
     GIS_LNI_PR_PHC_HistoricalResReview = GISLNI.sde_path + '\\GIS_LNI.PR_PHC'
-    PWD_Parcels = DataBridge_GIS_LNI.sde_path + '\\GIS_WATER.PWD_PARCELS'
+    PWD_Parcels = DataBridge.sde_path + '\\GIS_WATER.PWD_PARCELS'
     Parcels_Near_PHC_Sites = 'Parcels_Near_PHC_Sites'
     PR_FLAG_SUMMARY_GISLNI = GISLNI.sde_path + '\\GIS_LNI.LI_PR_FLAG_SUMMARY'
     PR_FLAG_SUMMARY_DataBridge_GISLNI = DataBridge_GIS_LNI.sde_path + '\\GIS_LNI.LI_PR_FLAG_SUMMARY'
