@@ -140,7 +140,8 @@ try:
     if arcpy.Exists(PPR_Properties_Local):
         arcpy.Delete_management(PPR_Properties_Local)
     # you need to apply the where clause so you only capture the parent feature of families of PPR_Property features
-    arcpy.FeatureClassToFeatureClass_conversion(PPR_Properties, localWorkspace, PPR_Properties_Local, where_clause="NESTED = 'N'")
+    arcpy.FeatureClassToFeatureClass_conversion(PPR_Properties, localWorkspace, PPR_Properties_Local,
+                                                where_clause="NESTED = 'N'")
 
     print('updated feature classes')
     logging.info('updated feature classes')
@@ -189,7 +190,6 @@ try:
         arcpy.AddField_management(PPR_Properties_Temp, 'PARCEL_AREA', 'LONG')
         # arcpy.CalculateField_management(PPR_Assets_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON')
         arcpy.CalculateField_management(PPR_Properties_Temp, 'PARCEL_AREA', '!POLY_AREA!', 'PYTHON3')
-
 
         # Join Park IDs to Temp Parks Layer
         arcpy.JoinField_management(PPR_Properties_Temp, 'PARENT_NAME', Park_IDs, 'PARENT_NAME', ['LI_TEMP_ID'])
@@ -284,7 +284,7 @@ try:
                 arcpy.FeatureClassToFeatureClass_conversion(sourceFC, localWorkspace, reviewLayer,
                                                             whereClause)
 
-            # All FCs except for Zoning are copied to LIGISDB
+            # All FCs except for Zoning are copied to GISLNI
             if 'DOR' not in outputFC:
                 print('Copying FC to GISLNI')
                 # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField.)
@@ -295,12 +295,14 @@ try:
                 arcpy.DeleteRows_management(outputFC)
                 arcpy.Append_management(reviewLayer, outputFC, 'NO_TEST')
             else:
-                print('Copying FC to GISLNI')
+                print('Copying FC to DORInputGDB')
                 # log.info('Copying ' + reviewLayer + ' to ' + outputFC + ' with reviewField ' + reviewField)
                 arcpy.AddField_management(DORinputGDB + '\\' + reviewLayer, reviewField, 'TEXT')
-                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, reviewField, fieldCalculation, 'PYTHON3')
+                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, reviewField, fieldCalculation,
+                                                'PYTHON3')
                 arcpy.AddField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', 'TEXT', field_length=2000)
-                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"', 'PYTHON3')
+                arcpy.CalculateField_management(DORinputGDB + '\\' + reviewLayer, 'REVIEW_TYPE', '"' + reviewName + '"',
+                                                'PYTHON3')
                 arcpy.DeleteRows_management(outputFC)
                 arcpy.Append_management(DORinputGDB + '\\' + reviewLayer, outputFC, 'NO_TEST')
 
@@ -409,8 +411,10 @@ try:
                                            "Overlay_Name IN('/NCO Neighborhood Conservation Overlay District - Central Roxborough','/NCO Neighborhood Conservation Overlay District - Overbrook Farms','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 1','/NCO Neighborhood Conservation Overlay District - Powelton Village Zone 2','/NCO Neighborhood Conservation Overlay District - Queen Village','/NCO Neighborhood Conservation Overlay District - Ridge Park Roxborough')",
                                            GIS_LNI_PR_PCPC_WissWaterSiteReview]
     PCPC_GermantownMtAirySubareaFacadeReview = ['GermantownAveMtAiryFaçReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
-                                           "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea')", GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview]
-    PCPC_DOR_Mismatch_Review = ['DORMismatchReview', pcpcR, DORMismatchParcels, '"DOR Mismatch Review"', None, GIS_LNI_PR_PCPC_DORMismatchReview]
+                                                "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea')",
+                                                GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview]
+    PCPC_DOR_Mismatch_Review = ['DORMismatchReview', pcpcR, DORMismatchParcels, '"DOR Mismatch Review"', None,
+                                GIS_LNI_PR_PCPC_DORMismatchReview]
     PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Year Flood Plain"', None,
                             GIS_LNI_PR_PCPC_100YrFloodPlain]
     PCPC_SteepSlope = ['SteepSlopeReview', pcpcR, Zoning_SteepSlopeProtectArea_r, '"Steep Slope"', None,
@@ -434,12 +438,12 @@ try:
     # List to iterate inputs through parcel flag function
     reviewList = [PCPC_CityAveSiteReview, PCPC_RidgeAveFacadeReview, PCPC_MasterPlanReview, PCPC_CenterCityFacadeReview,
                   PCPC_NeighborConsReview,
-                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview, PCPC_DOR_Mismatch_Review, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
+                  PCPC_WissahickonWatershedSiteReview, PCPC_GermantownMtAirySubareaFacadeReview,
+                  PCPC_DOR_Mismatch_Review, PCPC_100YrFloodPlain, PCPC_SteepSlope, PCPC_SkyPlaneReview,
                   PAC_BuildIDSignageReview,
                   PAC_ParkwayBufferReview, PAC_SinageSpecialControl, PHC_HistoricalResReview, PWD_GreenRoofReview,
                   PWD_GSI_Buffer]
-    #reviewList = [PHC_HistoricalResReview]
-
+    # reviewList = [PHC_HistoricalResReview]
 
     # Call the parcelFlag function on each plan review input in order to create the plan review feature classes
     currentTract = 'CurrentDistrict'
@@ -507,9 +511,11 @@ try:
         corner = 1 if v['CornerProp'] else 0
         area = v['ParcelArea']
         district = v['District']
+        phcaBool = 0
+        phca = ''
         flagCursor.insertRow(
             [address, parcelID, pacBool, pac, pcpcBool, pcpc, phcBool, phc, pwdBool, pwd, corner, area, district, flood,
-             slope])
+             slope, phcaBool, phca])
 
     log.info('PR Flags Part 1 complete')
 
