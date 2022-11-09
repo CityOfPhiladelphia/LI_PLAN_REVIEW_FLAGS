@@ -1,7 +1,7 @@
 """
-Plan Review Flags - Part 5 of 5
+Plan Review Flags - Part 4 of 5
 
-This script populates the Zoning RCO value for every property value.
+This script truncates and appends on the GISLNI and DataBridge_GISLNI tables.
 This process must be run immediately after Parts 1-4 as pushes the now up to date data back to DataBridge and GISLNI
 """
 import logging
@@ -15,7 +15,7 @@ from sde_connections import DataBridge_GIS_LNI, GISLNI
 try:
     print('Step 1: Configuring log file...')
     log_file_path = 'E:\LI_PLAN_REVIEW_FLAGS\Logs\PermitReviewFlags.log'
-    log = logging.getLogger('PR Flags Part 5 - Copying to Enterprise')
+    log = logging.getLogger('PR Flags Part 4 - Copying to Enterprise')
     log.setLevel(logging.INFO)
     hdlr = logging.FileHandler(log_file_path)
     hdlr.setLevel(logging.INFO)
@@ -53,7 +53,7 @@ except:
     from email.mime.text import MIMEText
     from phila_mail import server
     sender = 'LIGISTeam@phila.gov'
-    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'SHANNON.HOLM@PHILA.GOV', 'Philip.Ribbens@Phila.gov', 'LIGISTeam@phila.gov', 'Jessica.bradley@phila.gov']
+    recipientslist = ['DANI.INTERRANTE@PHILA.GOV', 'daniel.whaland@phila.gov', 'bailey.glover@phila.gov', 'LIGISTeam@phila.gov']
     commaspace = ', '
     msg = MIMEText('AUTOMATIC EMAIL \n Plan Review Flags Update Failed during update: \n' + pymsg)
     msg['To'] = commaspace.join(recipientslist)
