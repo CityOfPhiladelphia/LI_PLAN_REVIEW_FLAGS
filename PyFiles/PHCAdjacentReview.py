@@ -51,7 +51,7 @@ try:
 
     print('Starting the spatial join process.')
     log.info('Starting the spatial join process.')
-    arcpy.analysis.SpatialJoin(PWD_Parcels, GIS_LNI_PR_PHC_HistoricalResReview, Parcels_Near_PHC_Sites, "JOIN_ONE_TO_ONE", "KEEP_COMMON", match_option="WITHIN_A_DISTANCE", search_radius="90 Feet")
+    arcpy.analysis.SpatialJoin(PWD_Parcels, GIS_LNI_PR_PHC_HistoricalResReview, Parcels_Near_PHC_Sites, "JOIN_ONE_TO_ONE", "KEEP_COMMON", match_option="WITHIN_A_DISTANCE", search_radius="5 Feet")
     print('Successfully joined parcels to PHC sites.')
     log.info('Successfully joined parcels to PHC sites.')
 
