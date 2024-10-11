@@ -416,7 +416,8 @@ try:
     PCPC_GermantownMtAirySubareaFacadeReview = ['GermantownAveMtAiryFaçReview', pcpcR, Zon_Overlays, '!Overlay_Name!',
                                                 "Overlay_Name IN('/NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea')",
                                                 GIS_LNI_PR_PCPC_GtownMtAiryFacadeReview]
-    PCPC_DOR_Mismatch_Review = ['DORMismatchReview', pcpcR, DORMismatchParcels, '"DOR Mismatch Review"', None,
+    # DOR can't trigger PCPC review anymore. It should not trigger any review, but it might be useful to someone to have those parcels flagged, so just remove the trigger for the PCPC review flag.
+    PCPC_DOR_Mismatch_Review = ['DORMismatchReview', None, DORMismatchParcels, '"DOR Mismatch Review"', None,
                                 GIS_LNI_PR_PCPC_DORMismatchReview]
     PCPC_100YrFloodPlain = ['FloodPlainReview', pcpcR, FEMA_100_flood_Plain, '"100 Year Flood Plain"', None,
                             GIS_LNI_PR_PCPC_100YrFloodPlain]
