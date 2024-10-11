@@ -66,6 +66,8 @@ The PCPC review layer indicates one of eight review types, although two (100 Yea
   * NCO Neighborhood Conservation Overlay District - Ridge Park Roxborough
 * **Wissahickon Watershed Site Review -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
   * WWO Wissahickon Watershed Overlay District
+* **GermantownMtAirySubareaFacadeReview -** This review is triggered on areas defined by the City of Philadelphia's Zoning Overlay Map as:
+  * NCA Neighborhood Commercial Area Overlay District - Germantown Avenue - Mount Airy Subarea
 
 #### 100 Year Floodplain Review (1% Chance of annual flood)
 <pre>FLOODPLAIN</pre>
